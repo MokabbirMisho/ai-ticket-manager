@@ -8,6 +8,7 @@ import userRoutes from "./routes/user.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
+import studentAuthRoutes from "./routes/studentAuth.routes.js";
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
+
+app.use("/api/student/auth", studentAuthRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({

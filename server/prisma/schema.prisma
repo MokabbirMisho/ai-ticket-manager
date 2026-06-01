@@ -39,6 +39,20 @@ model User {
   assignedTickets Ticket[] @relation("AssignedTickets")
 }
 
+model Student {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets   Ticket[]
+}
+
+
 model Ticket {
   id          String         @id @default(uuid())
   subject     String
@@ -51,6 +65,19 @@ model Ticket {
   assignedAgentId String?
   assignedAgent   User? @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
 
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model UserSession {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@index([expire])
+  @@map("user_sessions")
+  @@ignore
 }
