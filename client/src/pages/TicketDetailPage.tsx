@@ -35,6 +35,7 @@ export function TicketDetailPage() {
   const [assignedAgentId, setAssignedAgentId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [aiLoading, setAiLoading] = useState("");
   const [error, setError] = useState("");
 
   const fetchTicket = async () => {
@@ -86,6 +87,50 @@ export function TicketDetailPage() {
       setError("Failed to update ticket");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    try {
+      setAiLoading("summary");
+      setError("");
+
+      const response = await api.post(`/ai/summary/${id}`);
+      setTicket(response.data.data.ticket);
+    } catch {
+      setError("Failed to generate AI summary");
+    } finally {
+      setAiLoading("");
+    }
+  };
+
+  const handleGenerateReply = async () => {
+    try {
+      setAiLoading("reply");
+      setError("");
+
+      const response = await api.post(`/ai/reply/${id}`);
+      setTicket(response.data.data.ticket);
+    } catch {
+      setError("Failed to generate AI reply");
+    } finally {
+      setAiLoading("");
+    }
+  };
+
+  const handleClassifyTicket = async () => {
+    try {
+      setAiLoading("classify");
+      setError("");
+
+      const response = await api.post(`/ai/classify/${id}`);
+      const updatedTicket = response.data.data.ticket;
+
+      setTicket(updatedTicket);
+    } catch {
+      setError("Failed to classify ticket");
+    } finally {
+      setAiLoading("");
     }
   };
 
@@ -156,23 +201,45 @@ export function TicketDetailPage() {
           </div>
 
           <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">AI Summary</h2>
-            <p className="mt-3 text-slate-600">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-bold text-slate-900">AI Summary</h2>
+
+              <button
+                onClick={handleGenerateSummary}
+                disabled={aiLoading === "summary"}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {aiLoading === "summary" ? "Generating..." : "Generate Summary"}
+              </button>
+            </div>
+
+            <p className="mt-3 whitespace-pre-line text-slate-600">
               {ticket.aiSummary || "AI summary will appear here later."}
             </p>
           </div>
 
           <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">
-              AI Suggested Reply
-            </h2>
-            <p className="mt-3 text-slate-600">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-bold text-slate-900">
+                AI Suggested Reply
+              </h2>
+
+              <button
+                onClick={handleGenerateReply}
+                disabled={aiLoading === "reply"}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {aiLoading === "reply" ? "Generating..." : "Generate Reply"}
+              </button>
+            </div>
+
+            <p className="mt-3 whitespace-pre-line text-slate-600">
               {ticket.aiReply || "AI suggested reply will appear here later."}
             </p>
           </div>
         </section>
 
-        <aside>
+        <aside className="space-y-6">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">Manage Ticket</h2>
 
@@ -218,6 +285,45 @@ export function TicketDetailPage() {
                 className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
               >
                 {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">AI Actions</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Use AI to classify, summarize, and prepare a suggested reply.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              <button
+                onClick={handleClassifyTicket}
+                disabled={aiLoading === "classify"}
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {aiLoading === "classify"
+                  ? "Classifying..."
+                  : "Classify Ticket"}
+              </button>
+
+              <button
+                onClick={handleGenerateSummary}
+                disabled={aiLoading === "summary"}
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {aiLoading === "summary"
+                  ? "Generating Summary..."
+                  : "Generate Summary"}
+              </button>
+
+              <button
+                onClick={handleGenerateReply}
+                disabled={aiLoading === "reply"}
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {aiLoading === "reply"
+                  ? "Generating Reply..."
+                  : "Generate Reply"}
               </button>
             </div>
           </div>
