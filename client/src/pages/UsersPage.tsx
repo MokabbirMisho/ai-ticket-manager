@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 type UserRole = "ADMIN" | "AGENT";
 
@@ -14,6 +16,8 @@ type User = {
 };
 
 export function UsersPage() {
+  const { user } = useAuth();
+
   const [users, setUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +32,10 @@ export function UsersPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  if (user?.role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const fetchUsers = async () => {
     try {
@@ -77,11 +85,11 @@ export function UsersPage() {
     }
   };
 
-  const startEdit = (user: User) => {
-    setEditingUserId(user.id);
-    setEditName(user.name);
-    setEditEmail(user.email);
-    setEditIsActive(user.isActive);
+  const startEdit = (selectedUser: User) => {
+    setEditingUserId(selectedUser.id);
+    setEditName(selectedUser.name);
+    setEditEmail(selectedUser.email);
+    setEditIsActive(selectedUser.isActive);
     setError("");
     setSuccess("");
   };
@@ -215,49 +223,51 @@ export function UsersPage() {
 
           {!isLoading && users.length > 0 && (
             <div className="divide-y divide-slate-100">
-              {users.map((user) => {
-                const isEditing = editingUserId === user.id;
-                const isAdmin = user.role === "ADMIN";
+              {users.map((listedUser) => {
+                const isEditing = editingUserId === listedUser.id;
+                const isAdmin = listedUser.role === "ADMIN";
 
                 return (
-                  <div key={user.id} className="p-5">
+                  <div key={listedUser.id} className="p-5">
                     {!isEditing ? (
                       <div className="flex items-center justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-slate-900">
-                              {user.name}
+                              {listedUser.name}
                             </h3>
                             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                              {user.role}
+                              {listedUser.role}
                             </span>
                             <span
                               className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                user.isActive
+                                listedUser.isActive
                                   ? "bg-green-50 text-green-700"
                                   : "bg-red-50 text-red-700"
                               }`}
                             >
-                              {user.isActive ? "Active" : "Inactive"}
+                              {listedUser.isActive ? "Active" : "Inactive"}
                             </span>
                           </div>
 
                           <p className="mt-1 text-sm text-slate-500">
-                            {user.email}
+                            {listedUser.email}
                           </p>
                         </div>
 
                         <div className="flex gap-2">
                           <button
-                            onClick={() => startEdit(user)}
+                            onClick={() => startEdit(listedUser)}
                             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                           >
                             Edit
                           </button>
 
-                          {!isAdmin && user.isActive && (
+                          {!isAdmin && listedUser.isActive && (
                             <button
-                              onClick={() => handleDeactivateUser(user.id)}
+                              onClick={() =>
+                                handleDeactivateUser(listedUser.id)
+                              }
                               className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
                             >
                               Deactivate
@@ -312,7 +322,7 @@ export function UsersPage() {
 
                         <div className="flex gap-2 md:col-span-3">
                           <button
-                            onClick={() => handleUpdateUser(user.id)}
+                            onClick={() => handleUpdateUser(listedUser.id)}
                             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
                           >
                             Save

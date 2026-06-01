@@ -40,11 +40,33 @@ export const listTickets = async (req: Request, res: Response) => {
   try {
     const { status, category, sort } = req.query;
 
+    const where: {
+      status?: TicketStatus;
+      category?: TicketCategory;
+      assignedAgentId?: string;
+    } = {};
+
+    if (typeof status === "string" && status) {
+      where.status = status as TicketStatus;
+    }
+
+    if (typeof category === "string" && category) {
+      where.category = category as TicketCategory;
+    }
+
+    if (req.session.role === "AGENT") {
+      if (!req.session.userId) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Authentication required",
+        });
+      }
+
+      where.assignedAgentId = req.session.userId;
+    }
+
     const tickets = await prisma.ticket.findMany({
-      where: {
-        status: status ? (status as TicketStatus) : undefined,
-        category: category ? (category as TicketCategory) : undefined,
-      },
+      where,
       orderBy: {
         createdAt: sort === "oldest" ? "asc" : "desc",
       },
@@ -55,6 +77,13 @@ export const listTickets = async (req: Request, res: Response) => {
             name: true,
             email: true,
             role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },
@@ -77,10 +106,35 @@ export const listTickets = async (req: Request, res: Response) => {
 
 export const getTicket = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const ticketId = req.params.id;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id },
+    if (!ticketId || Array.isArray(ticketId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid ticket ID is required",
+      });
+    }
+
+    const where: {
+      id: string;
+      assignedAgentId?: string;
+    } = {
+      id: ticketId,
+    };
+
+    if (req.session.role === "AGENT") {
+      if (!req.session.userId) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Authentication required",
+        });
+      }
+
+      where.assignedAgentId = req.session.userId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({
+      where,
       include: {
         assignedAgent: {
           select: {
@@ -88,6 +142,13 @@ export const getTicket = async (req: Request, res: Response) => {
             name: true,
             email: true,
             role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },
@@ -116,17 +177,53 @@ export const getTicket = async (req: Request, res: Response) => {
 
 export const updateTicket = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const ticketId = req.params.id;
+
+    if (!ticketId || Array.isArray(ticketId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid ticket ID is required",
+      });
+    }
+
+    const currentUserId = req.session.userId;
+    const currentRole = req.session.role;
+
+    if (!currentUserId || !currentRole) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Authentication required",
+      });
+    }
+
     const { status, category, assignedAgentId, aiSummary, aiReply } = req.body;
 
-    const existingTicket = await prisma.ticket.findUnique({
-      where: { id },
+    const ticketWhere: {
+      id: string;
+      assignedAgentId?: string;
+    } = {
+      id: ticketId,
+    };
+
+    if (currentRole === "AGENT") {
+      ticketWhere.assignedAgentId = currentUserId;
+    }
+
+    const existingTicket = await prisma.ticket.findFirst({
+      where: ticketWhere,
     });
 
     if (!existingTicket) {
       return res.status(404).json({
         status: "fail",
         message: "Ticket not found",
+      });
+    }
+
+    if (currentRole === "AGENT" && assignedAgentId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Agents cannot assign tickets",
       });
     }
 
@@ -144,7 +241,7 @@ export const updateTicket = async (req: Request, res: Response) => {
     }
 
     const ticket = await prisma.ticket.update({
-      where: { id },
+      where: { id: ticketId },
       data: {
         status,
         category,
@@ -159,6 +256,13 @@ export const updateTicket = async (req: Request, res: Response) => {
             name: true,
             email: true,
             role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },

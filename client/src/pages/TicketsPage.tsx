@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 type TicketStatus = "OPEN" | "RESOLVED" | "CLOSED";
 
@@ -18,6 +19,7 @@ type Ticket = {
   aiSummary: string | null;
   aiReply: string | null;
   assignedAgentId: string | null;
+  studentId?: string | null;
   createdAt: string;
   updatedAt: string;
   assignedAgent: {
@@ -26,15 +28,24 @@ type Ticket = {
     email: string;
     role: string;
   } | null;
+  student?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
 };
 
 export function TicketsPage() {
+  const { user } = useAuth();
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("newest");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const isAdmin = user?.role === "ADMIN";
 
   const fetchTickets = async () => {
     try {
@@ -65,9 +76,14 @@ export function TicketsPage() {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tickets</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isAdmin ? "All Tickets" : "My Assigned Tickets"}
+          </h1>
+
           <p className="mt-2 text-slate-500">
-            View, filter, assign, and manage support tickets.
+            {isAdmin
+              ? "View, filter, assign, and manage all support tickets."
+              : "View and manage tickets assigned to you."}
           </p>
         </div>
       </div>
@@ -130,7 +146,11 @@ export function TicketsPage() {
         {error && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!isLoading && !error && tickets.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">No tickets found.</div>
+          <div className="p-6 text-sm text-slate-500">
+            {isAdmin
+              ? "No tickets found."
+              : "No tickets are assigned to you yet."}
+          </div>
         )}
 
         {!isLoading && !error && tickets.length > 0 && (
@@ -140,6 +160,7 @@ export function TicketsPage() {
                 <th className="px-5 py-3 font-medium">Subject</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Category</th>
+                <th className="px-5 py-3 font-medium">Student</th>
                 <th className="px-5 py-3 font-medium">Assigned Agent</th>
                 <th className="px-5 py-3 font-medium">Created</th>
               </tr>
@@ -167,6 +188,10 @@ export function TicketsPage() {
 
                   <td className="px-5 py-4 text-slate-600">
                     {ticket.category}
+                  </td>
+
+                  <td className="px-5 py-4 text-slate-600">
+                    {ticket.student?.name || "Manual Ticket"}
                   </td>
 
                   <td className="px-5 py-4 text-slate-600">

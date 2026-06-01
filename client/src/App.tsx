@@ -14,13 +14,14 @@ import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
 import { StudentCreateTicketPage } from "./pages/StudentCreateTicketPage";
 import { StudentTicketsPage } from "./pages/StudentTicketsPage";
 import { StudentTicketDetailPage } from "./pages/StudentTicketDetailPage";
+import { LandingPage } from "./pages/LandingPage";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LandingPage />} />
       {/* Admin / Agent */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin/login" element={<LoginPage />} />
 
       <Route path="/student/login" element={<StudentLoginPage />} />
       <Route path="/student/register" element={<StudentRegisterPage />} />
