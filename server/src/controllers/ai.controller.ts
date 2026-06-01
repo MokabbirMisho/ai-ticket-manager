@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
+import { TicketCategory } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import {
   generateTicketSummary,
   generateAIReply,
   classifyTicketWithAI,
 } from "../services/openai.service.js";
-import { TicketCategory } from "@prisma/client";
 
 export const summarizeTicket = async (req: Request, res: Response) => {
   try {
@@ -43,6 +43,23 @@ export const summarizeTicket = async (req: Request, res: Response) => {
       data: {
         aiSummary: summary,
       },
+      include: {
+        assignedAgent: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     return res.status(200).json({
@@ -77,6 +94,18 @@ export const generateReply = async (req: Request, res: Response) => {
       where: {
         id: ticketId,
       },
+      include: {
+        student: {
+          select: {
+            name: true,
+          },
+        },
+        assignedAgent: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
 
     if (!ticket) {
@@ -86,11 +115,13 @@ export const generateReply = async (req: Request, res: Response) => {
       });
     }
 
-    const reply = await generateAIReply(
-      ticket.subject,
-      ticket.description,
-      ticket.aiSummary || "",
-    );
+    const reply = await generateAIReply({
+      subject: ticket.subject,
+      description: ticket.description,
+      summary: ticket.aiSummary || "",
+      studentName: ticket.student?.name || "Student",
+      agentName: ticket.assignedAgent?.name || "Support Team",
+    });
 
     const updatedTicket = await prisma.ticket.update({
       where: {
@@ -98,6 +129,23 @@ export const generateReply = async (req: Request, res: Response) => {
       },
       data: {
         aiReply: reply,
+      },
+      include: {
+        assignedAgent: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -169,6 +217,23 @@ export const classifyTicket = async (req: Request, res: Response) => {
       },
       data: {
         category: category as TicketCategory,
+      },
+      include: {
+        assignedAgent: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 

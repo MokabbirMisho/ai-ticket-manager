@@ -24,17 +24,33 @@ Return only the summary.
   return response.output_text.trim();
 }
 
-export async function generateAIReply(
-  subject: string,
-  description: string,
-  summary: string,
-) {
+export async function generateAIReply({
+  subject,
+  description,
+  summary,
+  studentName,
+  agentName,
+}: {
+  subject: string;
+  description: string;
+  summary: string;
+  studentName: string;
+  agentName?: string | null;
+}) {
+  const finalAgentName = agentName || "Support Team";
+
   const response = await openai.responses.create({
     model: OPENAI_MODEL,
     input: `
-You are a professional customer support agent.
+You are a professional student support agent.
 
-Write a helpful support reply.
+Write a helpful support reply for the student.
+
+Student Name:
+${studentName}
+
+Agent Name:
+${finalAgentName}
 
 Subject:
 ${subject}
@@ -46,11 +62,13 @@ Description:
 ${description}
 
 Requirements:
-- Professional
-- Friendly
-- Short
-- Actionable
-- Return only the reply
+- Start with "Dear ${studentName},"
+- End with:
+  Best regards,
+  ${finalAgentName}
+- Do not use placeholders like [User], [Your Name], [Student Name], or [Agent Name].
+- Be professional, friendly, short, and actionable.
+- Return only the final reply.
 `,
   });
 
