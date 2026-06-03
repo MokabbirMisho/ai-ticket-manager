@@ -1,9 +1,8 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { Role } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
-export const createAgent = async (req: Request, res: Response) => {
+export const createStudent = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -14,71 +13,65 @@ export const createAgent = async (req: Request, res: Response) => {
       });
     }
 
-    const existingUser = await prisma.user.findUnique({
+    const existingStudent = await prisma.student.findUnique({
       where: { email },
     });
 
-    if (existingUser) {
+    if (existingStudent) {
       return res.status(409).json({
         status: "fail",
-        message: "User with this email already exists",
+        message: "Student with this email already exists",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const agent = await prisma.user.create({
+    const student = await prisma.student.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: Role.AGENT,
+        isActive: true,
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
         isActive: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
 
     return res.status(201).json({
       status: "success",
-      message: "Agent created successfully",
-      data: { user: agent },
+      message: "Student created successfully",
+      data: { student },
     });
   } catch (error) {
-    console.error("Create agent error:", error);
+    console.error("Create student error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while creating agent",
+      message: "Something went wrong while creating student",
     });
   }
 };
 
-export const listUsers = async (req: Request, res: Response) => {
+export const listStudents = async (req: Request, res: Response) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
     const search = typeof req.query.search === "string" ? req.query.search : "";
-    const role = typeof req.query.role === "string" ? req.query.role : "";
     const status = typeof req.query.status === "string" ? req.query.status : "";
 
     const where: {
-      role?: "ADMIN" | "AGENT";
       isActive?: boolean;
       OR?: {
         name?: { contains: string; mode: "insensitive" };
         email?: { contains: string; mode: "insensitive" };
       }[];
     } = {};
-
-    if (role === "ADMIN" || role === "AGENT") {
-      where.role = role;
-    }
 
     if (status === "active") {
       where.isActive = true;
@@ -105,8 +98,8 @@ export const listUsers = async (req: Request, res: Response) => {
       ];
     }
 
-    const [users, totalUsers] = await Promise.all([
-      prisma.user.findMany({
+    const [students, totalStudents] = await Promise.all([
+      prisma.student.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
@@ -117,68 +110,91 @@ export const listUsers = async (req: Request, res: Response) => {
           id: true,
           name: true,
           email: true,
-          role: true,
           isActive: true,
           createdAt: true,
           updatedAt: true,
+          _count: {
+            select: {
+              tickets: true,
+            },
+          },
         },
       }),
 
-      prisma.user.count({
+      prisma.student.count({
         where,
       }),
     ]);
 
     return res.status(200).json({
       status: "success",
-      results: users.length,
+      results: students.length,
       data: {
-        users,
+        students,
         pagination: {
           page,
           limit,
-          totalUsers,
-          totalPages: Math.ceil(totalUsers / limit),
+          totalStudents,
+          totalPages: Math.ceil(totalStudents / limit),
         },
       },
     });
   } catch (error) {
-    console.error("List users error:", error);
+    console.error("List students error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while listing users",
+      message: "Something went wrong while listing students",
     });
   }
 };
-export const updateUser = async (req: Request, res: Response) => {
+
+export const updateStudent = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { name, email, isActive } = req.body;
+    const studentId = req.params.id;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({
+    if (!studentId || Array.isArray(studentId)) {
+      return res.status(400).json({
         status: "fail",
-        message: "User not found",
+        message: "Valid student ID is required",
       });
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        email,
-        isActive,
-      },
+    const { name, email, password, isActive } = req.body;
+
+    const existingStudent = await prisma.student.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Student not found",
+      });
+    }
+
+    const data: {
+      name?: string;
+      email?: string;
+      password?: string;
+      isActive?: boolean;
+    } = {};
+
+    if (name) data.name = name;
+    if (email) data.email = email;
+    if (typeof isActive === "boolean") data.isActive = isActive;
+
+    if (password) {
+      data.password = await bcrypt.hash(password, 12);
+    }
+
+    const student = await prisma.student.update({
+      where: { id: studentId },
+      data,
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -187,43 +203,43 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      message: "User updated successfully",
-      data: { user: updatedUser },
+      message: "Student updated successfully",
+      data: { student },
     });
   } catch (error) {
-    console.error("Update user error:", error);
+    console.error("Update student error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while updating user",
+      message: "Something went wrong while updating student",
     });
   }
 };
 
-export const deactivateUser = async (req: Request, res: Response) => {
+export const deactivateStudent = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const studentId = req.params.id;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({
-        status: "fail",
-        message: "User not found",
-      });
-    }
-
-    if (existingUser.role === "ADMIN") {
+    if (!studentId || Array.isArray(studentId)) {
       return res.status(400).json({
         status: "fail",
-        message: "Admin user cannot be deactivated",
+        message: "Valid student ID is required",
       });
     }
 
-    const deactivatedUser = await prisma.user.update({
-      where: { id },
+    const existingStudent = await prisma.student.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Student not found",
+      });
+    }
+
+    const student = await prisma.student.update({
+      where: { id: studentId },
       data: {
         isActive: false,
       },
@@ -231,23 +247,23 @@ export const deactivateUser = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
-        role: true,
         isActive: true,
+        createdAt: true,
         updatedAt: true,
       },
     });
 
     return res.status(200).json({
       status: "success",
-      message: "User deactivated successfully",
-      data: { user: deactivatedUser },
+      message: "Student deactivated successfully",
+      data: { student },
     });
   } catch (error) {
-    console.error("Deactivate user error:", error);
+    console.error("Deactivate student error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while deactivating user",
+      message: "Something went wrong while deactivating student",
     });
   }
 };
