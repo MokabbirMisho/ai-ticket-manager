@@ -2,21 +2,23 @@ import type { Request, Response } from "express";
 import { TicketCategory } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import {
-  generateTicketSummary,
-  generateAIReply,
   classifyTicketWithAI,
+  generateAIReply,
+  generateTicketSummary,
 } from "../services/openai.service.js";
 
 export const summarizeTicket = async (req: Request, res: Response) => {
   try {
-    const { ticketId } = req.params;
+    const ticketIdParam = req.params.ticketId;
 
-    if (!ticketId) {
+    if (!ticketIdParam || Array.isArray(ticketIdParam)) {
       return res.status(400).json({
         status: "fail",
-        message: "Ticket ID is required",
+        message: "Valid ticket ID is required",
       });
     }
+
+    const ticketId: string = ticketIdParam;
 
     const ticket = await prisma.ticket.findUnique({
       where: {
@@ -81,14 +83,16 @@ export const summarizeTicket = async (req: Request, res: Response) => {
 
 export const generateReply = async (req: Request, res: Response) => {
   try {
-    const { ticketId } = req.params;
+    const ticketIdParam = req.params.ticketId;
 
-    if (!ticketId) {
+    if (!ticketIdParam || Array.isArray(ticketIdParam)) {
       return res.status(400).json({
         status: "fail",
-        message: "Ticket ID is required",
+        message: "Valid ticket ID is required",
       });
     }
+
+    const ticketId: string = ticketIdParam;
 
     const ticket = await prisma.ticket.findUnique({
       where: {
@@ -115,12 +119,78 @@ export const generateReply = async (req: Request, res: Response) => {
       });
     }
 
+    const subject = ticket.subject;
+    const description = ticket.description;
+    const category = ticket.category;
+
+    const keywords = `${subject} ${description} ${category}`
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => word.replace(/[^a-z0-9]/gi, ""))
+      .filter((word) => word.length > 3)
+      .slice(0, 10);
+
+    const relatedArticles = await prisma.knowledgeArticle.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          ...keywords.map((keyword) => ({
+            title: {
+              contains: keyword,
+              mode: "insensitive" as const,
+            },
+          })),
+          ...keywords.map((keyword) => ({
+            content: {
+              contains: keyword,
+              mode: "insensitive" as const,
+            },
+          })),
+          {
+            category: {
+              contains: String(category),
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      },
+      take: 3,
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+
+    const articlesForContext =
+      relatedArticles.length > 0
+        ? relatedArticles
+        : await prisma.knowledgeArticle.findMany({
+            where: {
+              isActive: true,
+            },
+            take: 3,
+            orderBy: {
+              updatedAt: "desc",
+            },
+          });
+
+    const knowledgeContext = articlesForContext
+      .map((article, index) => {
+        return `
+Article ${index + 1}
+Title: ${article.title}
+Category: ${article.category}
+Content: ${article.content}
+`;
+      })
+      .join("\n");
+
     const reply = await generateAIReply({
-      subject: ticket.subject,
-      description: ticket.description,
+      subject,
+      description,
       summary: ticket.aiSummary || "",
       studentName: ticket.student?.name || "Student",
       agentName: ticket.assignedAgent?.name || "Support Team",
+      knowledgeContext,
     });
 
     const updatedTicket = await prisma.ticket.update({
@@ -151,9 +221,14 @@ export const generateReply = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      message: "AI reply generated successfully",
+      message: "AI reply generated successfully using knowledge base",
       data: {
         ticket: updatedTicket,
+        knowledgeArticlesUsed: articlesForContext.map((article) => ({
+          id: article.id,
+          title: article.title,
+          category: article.category,
+        })),
       },
     });
   } catch (error) {
@@ -168,14 +243,16 @@ export const generateReply = async (req: Request, res: Response) => {
 
 export const classifyTicket = async (req: Request, res: Response) => {
   try {
-    const { ticketId } = req.params;
+    const ticketIdParam = req.params.ticketId;
 
-    if (!ticketId) {
+    if (!ticketIdParam || Array.isArray(ticketIdParam)) {
       return res.status(400).json({
         status: "fail",
-        message: "Ticket ID is required",
+        message: "Valid ticket ID is required",
       });
     }
+
+    const ticketId: string = ticketIdParam;
 
     const ticket = await prisma.ticket.findUnique({
       where: {

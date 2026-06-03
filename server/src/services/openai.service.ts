@@ -30,12 +30,14 @@ export async function generateAIReply({
   summary,
   studentName,
   agentName,
+  knowledgeContext,
 }: {
   subject: string;
   description: string;
   summary: string;
   studentName: string;
   agentName?: string | null;
+  knowledgeContext?: string;
 }) {
   const finalAgentName = agentName || "Support Team";
 
@@ -61,11 +63,18 @@ ${summary}
 Description:
 ${description}
 
+Relevant Knowledge Base Information:
+${knowledgeContext || "No specific knowledge base article was found."}
+
 Requirements:
 - Start with "Dear ${studentName},"
 - End with:
   Best regards,
   ${finalAgentName}
+- Use the knowledge base information when it is relevant.
+- If the knowledge base information is not relevant, answer based on the ticket only.
+- Do not invent university policies, deadlines, fees, or processing times.
+- Do not mention "knowledge base" to the student.
 - Do not use placeholders like [User], [Your Name], [Student Name], or [Agent Name].
 - Be professional, friendly, short, and actionable.
 - Return only the final reply.

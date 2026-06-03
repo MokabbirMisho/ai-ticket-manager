@@ -15,6 +15,7 @@ import { TicketsPage } from "./pages/TicketsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
+import { KnowledgePage } from "./pages/KnowledgePage";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/students" element={<StudentsPage />} />
+        <Route path="/knowledge" element={<KnowledgePage />} />
       </Route>
     </Routes>
   );
