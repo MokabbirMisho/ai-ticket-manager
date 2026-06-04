@@ -72,6 +72,7 @@ export function StudentTicketsPage() {
             {tickets.map((ticket) => (
               <Link
                 key={ticket.id}
+                data-testid="ticket-row"
                 to={`/student/tickets/${ticket.id}`}
                 className="block p-5 hover:bg-slate-50"
               >

@@ -50,6 +50,7 @@ export function StudentCreateTicketPage() {
               Subject
             </label>
             <input
+              data-testid="ticket-subject"
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
@@ -62,6 +63,7 @@ export function StudentCreateTicketPage() {
               Description
             </label>
             <textarea
+              data-testid="ticket-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={7}
@@ -71,6 +73,7 @@ export function StudentCreateTicketPage() {
           </div>
 
           <button
+            data-testid="submit-ticket-button"
             type="submit"
             disabled={isSubmitting}
             className="rounded-lg bg-slate-900 px-5 py-2 font-medium text-white disabled:opacity-60"
