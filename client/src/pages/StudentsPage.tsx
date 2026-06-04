@@ -40,7 +40,7 @@ export function StudentsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
 
-  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPassword, setEditPassword] = useState("");
@@ -48,6 +48,7 @@ export function StudentsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -114,8 +115,8 @@ export function StudentsPage() {
     }
   };
 
-  const startEdit = (student: Student) => {
-    setEditingStudentId(student.id);
+  const openEditModal = (student: Student) => {
+    setSelectedStudent(student);
     setEditName(student.name);
     setEditEmail(student.email);
     setEditPassword("");
@@ -124,16 +125,19 @@ export function StudentsPage() {
     setSuccess("");
   };
 
-  const cancelEdit = () => {
-    setEditingStudentId(null);
+  const closeEditModal = () => {
+    setSelectedStudent(null);
     setEditName("");
     setEditEmail("");
     setEditPassword("");
     setEditIsActive(true);
   };
 
-  const handleUpdateStudent = async (studentId: string) => {
+  const handleUpdateStudent = async () => {
+    if (!selectedStudent) return;
+
     try {
+      setIsUpdating(true);
       setError("");
       setSuccess("");
 
@@ -152,13 +156,15 @@ export function StudentsPage() {
         payload.password = editPassword;
       }
 
-      await api.patch(`/students/${studentId}`, payload);
+      await api.patch(`/students/${selectedStudent.id}`, payload);
 
       setSuccess("Student updated successfully");
-      cancelEdit();
+      closeEditModal();
       await fetchStudents(pagination.page);
     } catch {
       setError("Failed to update student");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -322,133 +328,59 @@ export function StudentsPage() {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
-                    {students.map((student) => {
-                      const isEditing = editingStudentId === student.id;
+                    {students.map((student) => (
+                      <tr key={student.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-4 font-medium text-slate-900">
+                          {student.name}
+                        </td>
 
-                      return (
-                        <tr key={student.id} className="hover:bg-slate-50">
-                          {!isEditing ? (
-                            <>
-                              <td className="px-5 py-4 font-medium text-slate-900">
-                                {student.name}
-                              </td>
+                        <td className="px-5 py-4 text-slate-600">
+                          {student.email}
+                        </td>
 
-                              <td className="px-5 py-4 text-slate-600">
-                                {student.email}
-                              </td>
+                        <td className="px-5 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${
+                              student.isActive
+                                ? "bg-green-50 text-green-700"
+                                : "bg-red-50 text-red-700"
+                            }`}
+                          >
+                            {student.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </td>
 
-                              <td className="px-5 py-4">
-                                <span
-                                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                    student.isActive
-                                      ? "bg-green-50 text-green-700"
-                                      : "bg-red-50 text-red-700"
-                                  }`}
-                                >
-                                  {student.isActive ? "Active" : "Inactive"}
-                                </span>
-                              </td>
+                        <td className="px-5 py-4 text-slate-600">
+                          {student._count?.tickets ?? 0}
+                        </td>
 
-                              <td className="px-5 py-4 text-slate-600">
-                                {student._count?.tickets ?? 0}
-                              </td>
+                        <td className="px-5 py-4 text-slate-500">
+                          {new Date(student.createdAt).toLocaleDateString()}
+                        </td>
 
-                              <td className="px-5 py-4 text-slate-500">
-                                {new Date(
-                                  student.createdAt,
-                                ).toLocaleDateString()}
-                              </td>
+                        <td className="px-5 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditModal(student)}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                              Edit
+                            </button>
 
-                              <td className="px-5 py-4">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => startEdit(student)}
-                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                  >
-                                    Edit
-                                  </button>
-
-                                  {student.isActive && (
-                                    <button
-                                      onClick={() =>
-                                        handleDeactivateStudent(student.id)
-                                      }
-                                      className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-                                    >
-                                      Deactivate
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            </>
-                          ) : (
-                            <td colSpan={6} className="px-5 py-4">
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <input
-                                  value={editName}
-                                  onChange={(event) =>
-                                    setEditName(event.target.value)
-                                  }
-                                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                                  placeholder="Name"
-                                />
-
-                                <input
-                                  type="email"
-                                  value={editEmail}
-                                  onChange={(event) =>
-                                    setEditEmail(event.target.value)
-                                  }
-                                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                                  placeholder="Email"
-                                />
-
-                                <input
-                                  type="password"
-                                  value={editPassword}
-                                  onChange={(event) =>
-                                    setEditPassword(event.target.value)
-                                  }
-                                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                                  placeholder="New password optional"
-                                />
-
-                                <select
-                                  value={editIsActive ? "active" : "inactive"}
-                                  onChange={(event) =>
-                                    setEditIsActive(
-                                      event.target.value === "active",
-                                    )
-                                  }
-                                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                                >
-                                  <option value="active">Active</option>
-                                  <option value="inactive">Inactive</option>
-                                </select>
-
-                                <div className="flex gap-2 md:col-span-2">
-                                  <button
-                                    onClick={() =>
-                                      handleUpdateStudent(student.id)
-                                    }
-                                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                                  >
-                                    Save
-                                  </button>
-
-                                  <button
-                                    onClick={cancelEdit}
-                                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
+                            {student.isActive && (
+                              <button
+                                onClick={() =>
+                                  handleDeactivateStudent(student.id)
+                                }
+                                className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                              >
+                                Deactivate
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -480,6 +412,101 @@ export function StudentsPage() {
           )}
         </section>
       </div>
+
+      {selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Edit Student
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Update student portal account details.
+                </p>
+              </div>
+
+              <button
+                onClick={closeEditModal}
+                className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-600"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Name
+                </label>
+                <input
+                  value={editName}
+                  onChange={(event) => setEditName(event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(event) => setEditEmail(event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(event) => setEditPassword(event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+                  placeholder="Leave empty to keep current password"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Status
+                </label>
+                <select
+                  value={editIsActive ? "active" : "inactive"}
+                  onChange={(event) =>
+                    setEditIsActive(event.target.value === "active")
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={closeEditModal}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleUpdateStudent}
+                  disabled={isUpdating}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
