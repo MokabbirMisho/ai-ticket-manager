@@ -50,6 +50,7 @@ export function StudentLoginPage() {
               Email
             </label>
             <input
+              data-testid="email-input"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -62,6 +63,7 @@ export function StudentLoginPage() {
               Password
             </label>
             <input
+              data-testid="password-input"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -70,6 +72,7 @@ export function StudentLoginPage() {
           </div>
 
           <button
+            data-testid="login-button"
             disabled={isSubmitting}
             className="w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-60"
           >

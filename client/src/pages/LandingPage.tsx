@@ -68,22 +68,6 @@ export function LandingPage() {
             summarize, and generate professional replies.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              to="/student/register"
-              className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800"
-            >
-              Create Student Account
-            </Link>
-
-            <Link
-              to="/student/login"
-              className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-            >
-              Student Login
-            </Link>
-          </div>
-
           <div className="mt-10 grid max-w-xl grid-cols-3 gap-4">
             <Stat value="AI" label="Ticket Analysis" />
             <Stat value="3" label="User Roles" />
@@ -210,10 +194,10 @@ export function LandingPage() {
 
             <div className="flex flex-wrap gap-4 md:justify-end">
               <Link
-                to="/student/register"
+                to="/student/login"
                 className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900"
               >
-                Student Register
+                Student Login
               </Link>
 
               <Link
