@@ -153,11 +153,19 @@ export const listUsers = async (req: Request, res: Response) => {
 };
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { name, email, isActive } = req.body;
+    const userId = req.params.id;
+
+    if (!userId || Array.isArray(userId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid user ID is required",
+      });
+    }
+
+    const { name, email, password, role, isActive } = req.body;
 
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
     });
 
     if (!existingUser) {
@@ -167,13 +175,32 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        email,
-        isActive,
-      },
+    const data: {
+      name?: string;
+      email?: string;
+      password?: string;
+      role?: "ADMIN" | "AGENT";
+      isActive?: boolean;
+    } = {};
+
+    if (name) data.name = name;
+    if (email) data.email = email;
+
+    if (role === "ADMIN" || role === "AGENT") {
+      data.role = role;
+    }
+
+    if (typeof isActive === "boolean") {
+      data.isActive = isActive;
+    }
+
+    if (password) {
+      data.password = await bcrypt.hash(password, 12);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
       select: {
         id: true,
         name: true,
@@ -188,7 +215,7 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.status(200).json({
       status: "success",
       message: "User updated successfully",
-      data: { user: updatedUser },
+      data: { user },
     });
   } catch (error) {
     console.error("Update user error:", error);
@@ -202,10 +229,17 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deactivateUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const userId = req.params.id;
+
+    if (!userId || Array.isArray(userId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid user ID is required",
+      });
+    }
 
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
     });
 
     if (!existingUser) {
@@ -223,7 +257,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
     }
 
     const deactivatedUser = await prisma.user.update({
-      where: { id },
+      where: { id: userId },
       data: {
         isActive: false,
       },
