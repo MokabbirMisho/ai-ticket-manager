@@ -1,11 +1,19 @@
 import type { Request, Response } from "express";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
 export const createArticle = async (req: Request, res: Response) => {
   try {
     const { title, content, category } = req.body;
 
-    if (!title || !content || !category) {
+    if (
+      typeof title !== "string" ||
+      typeof content !== "string" ||
+      typeof category !== "string" ||
+      !title.trim() ||
+      !content.trim() ||
+      !category.trim()
+    ) {
       return res.status(400).json({
         status: "fail",
         message: "Title, content and category are required",
@@ -14,9 +22,9 @@ export const createArticle = async (req: Request, res: Response) => {
 
     const article = await prisma.knowledgeArticle.create({
       data: {
-        title,
-        content,
-        category,
+        title: title.trim(),
+        content: content.trim(),
+        category: category.trim(),
       },
     });
 
@@ -38,28 +46,39 @@ export const createArticle = async (req: Request, res: Response) => {
 
 export const getArticles = async (req: Request, res: Response) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const search = typeof req.query.search === "string" ? req.query.search : "";
+    const page =
+      typeof req.query.page === "string" ? Number(req.query.page) || 1 : 1;
 
-    const where = search
-      ? {
-          OR: [
-            {
-              title: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-            {
-              category: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }
-      : {};
+    const limit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) || 20 : 20;
+
+    const search =
+      typeof req.query.search === "string" ? req.query.search.trim() : "";
+
+    const where: Prisma.KnowledgeArticleWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        {
+          title: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          category: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
 
     const [articles, totalArticles] = await Promise.all([
       prisma.knowledgeArticle.findMany({
@@ -101,9 +120,18 @@ export const getArticles = async (req: Request, res: Response) => {
 
 export const getArticle = async (req: Request, res: Response) => {
   try {
+    const articleId = req.params.id;
+
+    if (!articleId || Array.isArray(articleId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid article ID is required",
+      });
+    }
+
     const article = await prisma.knowledgeArticle.findUnique({
       where: {
-        id: req.params.id,
+        id: articleId,
       },
     });
 
@@ -132,16 +160,40 @@ export const getArticle = async (req: Request, res: Response) => {
 
 export const updateArticle = async (req: Request, res: Response) => {
   try {
+    const articleId = req.params.id;
+
+    if (!articleId || Array.isArray(articleId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid article ID is required",
+      });
+    }
+
+    const { title, content, category, isActive } = req.body;
+
+    const data: Prisma.KnowledgeArticleUpdateInput = {};
+
+    if (typeof title === "string") {
+      data.title = title.trim();
+    }
+
+    if (typeof content === "string") {
+      data.content = content.trim();
+    }
+
+    if (typeof category === "string") {
+      data.category = category.trim();
+    }
+
+    if (typeof isActive === "boolean") {
+      data.isActive = isActive;
+    }
+
     const article = await prisma.knowledgeArticle.update({
       where: {
-        id: req.params.id,
+        id: articleId,
       },
-      data: {
-        title: req.body.title,
-        content: req.body.content,
-        category: req.body.category,
-        isActive: req.body.isActive,
-      },
+      data,
     });
 
     return res.status(200).json({
@@ -162,9 +214,18 @@ export const updateArticle = async (req: Request, res: Response) => {
 
 export const deleteArticle = async (req: Request, res: Response) => {
   try {
+    const articleId = req.params.id;
+
+    if (!articleId || Array.isArray(articleId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid article ID is required",
+      });
+    }
+
     await prisma.knowledgeArticle.delete({
       where: {
-        id: req.params.id,
+        id: articleId,
       },
     });
 

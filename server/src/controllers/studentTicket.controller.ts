@@ -5,7 +5,21 @@ export const createStudentTicket = async (req: Request, res: Response) => {
   try {
     const { subject, description } = req.body;
 
-    if (!subject || !description) {
+    const studentId = req.session.studentId;
+
+    if (!studentId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Student authentication required",
+      });
+    }
+
+    if (
+      typeof subject !== "string" ||
+      typeof description !== "string" ||
+      !subject.trim() ||
+      !description.trim()
+    ) {
       return res.status(400).json({
         status: "fail",
         message: "Subject and description are required",
@@ -14,9 +28,9 @@ export const createStudentTicket = async (req: Request, res: Response) => {
 
     const ticket = await prisma.ticket.create({
       data: {
-        subject,
-        description,
-        studentId: req.session.studentId!,
+        subject: subject.trim(),
+        description: description.trim(),
+        studentId,
       },
     });
 
@@ -38,9 +52,18 @@ export const createStudentTicket = async (req: Request, res: Response) => {
 
 export const getMyTickets = async (req: Request, res: Response) => {
   try {
+    const studentId = req.session.studentId;
+
+    if (!studentId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Student authentication required",
+      });
+    }
+
     const tickets = await prisma.ticket.findMany({
       where: {
-        studentId: req.session.studentId,
+        studentId,
       },
       orderBy: {
         createdAt: "desc",
@@ -66,12 +89,27 @@ export const getMyTickets = async (req: Request, res: Response) => {
 
 export const getMyTicket = async (req: Request, res: Response) => {
   try {
-    const { ticketId } = req.params;
+    const studentId = req.session.studentId;
+    const ticketId = req.params.ticketId;
+
+    if (!studentId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Student authentication required",
+      });
+    }
+
+    if (!ticketId || Array.isArray(ticketId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Valid ticket ID is required",
+      });
+    }
 
     const ticket = await prisma.ticket.findFirst({
       where: {
         id: ticketId,
-        studentId: req.session.studentId,
+        studentId,
       },
       include: {
         assignedAgent: {

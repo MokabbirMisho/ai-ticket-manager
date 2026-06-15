@@ -4,6 +4,9 @@ node_modules
 # environment variables
 .env
 .env.*
+.env
+server/.env
+client/.env
 
 # build
 dist

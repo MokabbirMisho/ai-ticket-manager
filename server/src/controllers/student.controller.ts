@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
 
@@ -6,7 +7,14 @@ export const createStudent = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !password.trim()
+    ) {
       return res.status(400).json({
         status: "fail",
         message: "Name, email, and password are required",
@@ -14,7 +22,7 @@ export const createStudent = async (req: Request, res: Response) => {
     }
 
     const existingStudent = await prisma.student.findUnique({
-      where: { email },
+      where: { email: email.trim() },
     });
 
     if (existingStudent) {
@@ -28,8 +36,8 @@ export const createStudent = async (req: Request, res: Response) => {
 
     const student = await prisma.student.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         password: hashedPassword,
         isActive: true,
       },
@@ -60,18 +68,18 @@ export const createStudent = async (req: Request, res: Response) => {
 
 export const listStudents = async (req: Request, res: Response) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const search = typeof req.query.search === "string" ? req.query.search : "";
+    const page =
+      typeof req.query.page === "string" ? Number(req.query.page) || 1 : 1;
+
+    const limit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) || 20 : 20;
+
+    const search =
+      typeof req.query.search === "string" ? req.query.search.trim() : "";
+
     const status = typeof req.query.status === "string" ? req.query.status : "";
 
-    const where: {
-      isActive?: boolean;
-      OR?: {
-        name?: { contains: string; mode: "insensitive" };
-        email?: { contains: string; mode: "insensitive" };
-      }[];
-    } = {};
+    const where: Prisma.StudentWhereInput = {};
 
     if (status === "active") {
       where.isActive = true;
@@ -173,18 +181,21 @@ export const updateStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const data: {
-      name?: string;
-      email?: string;
-      password?: string;
-      isActive?: boolean;
-    } = {};
+    const data: Prisma.StudentUpdateInput = {};
 
-    if (name) data.name = name;
-    if (email) data.email = email;
-    if (typeof isActive === "boolean") data.isActive = isActive;
+    if (typeof name === "string" && name.trim()) {
+      data.name = name.trim();
+    }
 
-    if (password) {
+    if (typeof email === "string" && email.trim()) {
+      data.email = email.trim();
+    }
+
+    if (typeof isActive === "boolean") {
+      data.isActive = isActive;
+    }
+
+    if (typeof password === "string" && password.trim()) {
       data.password = await bcrypt.hash(password, 12);
     }
 
