@@ -11,14 +11,21 @@ type User = {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "AGENT";
+  role: "SUPER_ADMIN" | "ADMIN" | "AGENT";
+  tenantId?: string | null;
+  mustChangePassword: boolean;
   isActive: boolean;
 };
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -49,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
 
-    setUser(response.data.data.user);
+    const loggedInUser = response.data.data.user;
+    setUser(loggedInUser);
+
+    return loggedInUser;
   };
 
   const logout = async () => {
@@ -57,8 +67,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ) => {
+    const response = await api.patch("/auth/change-password", {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+
+    const updatedUser = response.data.data.user;
+    setUser(updatedUser);
+
+    return updatedUser;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, changePassword, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export function LoginPage() {
+export function SuperLoginPage() {
   const navigate = useNavigate();
   const { login, logout } = useAuth();
 
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("mokabbirmiso1992@gmail.com");
+  const [password, setPassword] = useState("Misho1234@");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,13 +20,13 @@ export function LoginPage() {
 
       const user = await login(email, password);
 
-      if (user.role === "SUPER_ADMIN") {
+      if (user.role !== "SUPER_ADMIN") {
         await logout();
-        setError("Please use the Super Admin Login for this account");
+        setError("This login is only for Super Admin accounts");
         return;
       }
 
-      navigate("/dashboard");
+      navigate("/super/dashboard");
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -35,14 +35,14 @@ export function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-slate-900">
-            AI Ticket Management
+            Super Admin Login
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Staff login for tenant admins and agents
+            Manage tenants, clients, and subscriptions
           </p>
         </div>
 
@@ -63,7 +63,7 @@ export function LoginPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
-              placeholder="admin@example.com"
+              placeholder="mokabbirmiso1992@gmail.com"
             />
           </div>
 
@@ -77,7 +77,7 @@ export function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
-              placeholder="admin123"
+              placeholder="Misho1234@"
             />
           </div>
 
@@ -90,6 +90,16 @@ export function LoginPage() {
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <p className="mt-5 text-center text-sm text-slate-500">
+          Tenant staff?{" "}
+          <Link
+            to="/admin/login"
+            className="font-medium text-slate-900 hover:underline"
+          >
+            Use Staff Login
+          </Link>
+        </p>
       </div>
     </main>
   );

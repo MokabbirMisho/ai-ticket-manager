@@ -214,7 +214,12 @@ export function LandingPage() {
       <footer className="border-t border-slate-200 px-6 py-8">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-slate-500 md:flex-row">
           <p>© 2026 AI Ticket Management System</p>
-          <p>Built with React, Node.js, PostgreSQL, Prisma, and OpenAI</p>
+          <p>
+            Built with React, Node.js, PostgreSQL, Prisma, and OpenAI ·{" "}
+            <Link to="/super/login" className="hover:text-slate-900">
+              Super Admin Login
+            </Link>
+          </p>
         </div>
       </footer>
     </main>

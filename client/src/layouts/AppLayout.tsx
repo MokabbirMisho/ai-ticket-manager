@@ -5,7 +5,13 @@ export function AppLayout() {
   const { user, logout } = useAuth();
 
   const navItems =
-    user?.role === "ADMIN"
+    user?.role === "SUPER_ADMIN"
+      ? [
+          { label: "Super Dashboard", path: "/super/dashboard" },
+          { label: "Tenants", path: "/super/tenants" },
+          { label: "Subscriptions", path: "/super/subscriptions" },
+        ]
+      : user?.role === "ADMIN"
       ? [
           { label: "Dashboard", path: "/dashboard" },
           { label: "Tickets", path: "/tickets" },
@@ -24,7 +30,11 @@ export function AppLayout() {
         <div className="border-b border-slate-800 px-6 py-5">
           <h1 className="text-lg font-bold">AI Ticket</h1>
           <p className="mt-1 text-xs text-slate-400">
-            {user?.role === "ADMIN" ? "Admin Portal" : "Agent Portal"}
+            {user?.role === "SUPER_ADMIN"
+              ? "Super Admin Portal"
+              : user?.role === "ADMIN"
+                ? "Admin Portal"
+                : "Agent Portal"}
           </p>
         </div>
 

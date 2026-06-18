@@ -12,6 +12,8 @@ import studentAuthRoutes from "./routes/studentAuth.routes.js";
 import studentTicketRoutes from "./routes/studentTicket.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import knowledgeRoutes from "./routes/knowledge.routes.js";
+import superTenantRoutes from "./routes/superTenant.routes.js";
+import superUserRoutes from "./routes/superUser.routes.js";
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use("/api/student/tickets", studentTicketRoutes);
 app.use("/api/students", studentRoutes);
 
 app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/super/tenants", superTenantRoutes);
+app.use("/api/super/users", superUserRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
