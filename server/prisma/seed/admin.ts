@@ -27,6 +27,19 @@ const prisma = new PrismaClient({
 async function main() {
   const hashedPassword = await bcrypt.hash("admin123", 12);
 
+  const tenant = await prisma.tenant.upsert({
+    where: {
+      slug: "default",
+    },
+    update: {},
+    create: {
+      name: "Default Workspace",
+      slug: "default",
+    },
+  });
+
+  console.log("Default tenant ready:", tenant.slug);
+
   const admin = await prisma.user.upsert({
     where: {
       email: "admin@example.com",

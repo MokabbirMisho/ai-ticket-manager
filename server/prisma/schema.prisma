@@ -23,6 +23,44 @@ enum TicketCategory {
   REFUND_REQUEST
 }
 
+enum Plan {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+enum PaymentProvider {
+  MANUAL
+  STRIPE
+  SSLCOMMERZ
+  BKASH
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  country   String?
+  industry  String?
+  isActive  Boolean  @default(true)
+
+  plan                 Plan               @default(FREE)
+  subscriptionStatus   SubscriptionStatus @default(TRIAL)
+  subscriptionEndsAt   DateTime?
+  paymentProvider      PaymentProvider    @default(MANUAL)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
