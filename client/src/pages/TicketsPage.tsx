@@ -160,7 +160,7 @@ export function TicketsPage() {
                 <th className="px-5 py-3 font-medium">Subject</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Category</th>
-                <th className="px-5 py-3 font-medium">Student</th>
+                <th className="px-5 py-3 font-medium">Requester</th>
                 <th className="px-5 py-3 font-medium">Assigned Agent</th>
                 <th className="px-5 py-3 font-medium">Created</th>
               </tr>

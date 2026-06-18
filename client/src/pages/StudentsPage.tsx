@@ -73,7 +73,7 @@ export function StudentsPage() {
       setStudents(response.data.data.students);
       setPagination(response.data.data.pagination);
     } catch {
-      setError("Failed to load students");
+      setError("Failed to load requesters");
     } finally {
       setIsLoading(false);
     }
@@ -105,11 +105,11 @@ export function StudentsPage() {
         password,
       });
 
-      setSuccess("Student created successfully");
+      setSuccess("Requester created successfully");
       resetCreateForm();
       await fetchStudents(1);
     } catch {
-      setError("Failed to create student");
+      setError("Failed to create requester");
     } finally {
       setIsCreating(false);
     }
@@ -158,11 +158,11 @@ export function StudentsPage() {
 
       await api.patch(`/students/${selectedStudent.id}`, payload);
 
-      setSuccess("Student updated successfully");
+      setSuccess("Requester updated successfully");
       closeEditModal();
       await fetchStudents(pagination.page);
     } catch {
-      setError("Failed to update student");
+      setError("Failed to update requester");
     } finally {
       setIsUpdating(false);
     }
@@ -175,10 +175,10 @@ export function StudentsPage() {
 
       await api.delete(`/students/${studentId}`);
 
-      setSuccess("Student deactivated successfully");
+      setSuccess("Requester deactivated successfully");
       await fetchStudents(pagination.page);
     } catch {
-      setError("Failed to deactivate student");
+      setError("Failed to deactivate requester");
     }
   };
 
@@ -197,15 +197,15 @@ export function StudentsPage() {
   return (
     <div>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Students</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Requesters</h1>
         <p className="mt-2 text-slate-500">
-          Admin area to create and manage student portal accounts.
+          Admin area to create and manage requester portal accounts.
         </p>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1">
-          <h2 className="text-lg font-bold text-slate-900">Create Student</h2>
+          <h2 className="text-lg font-bold text-slate-900">Create Requester</h2>
 
           <form onSubmit={handleCreateStudent} className="mt-5 space-y-4">
             <div>
@@ -216,7 +216,7 @@ export function StudentsPage() {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                placeholder="John Student"
+                placeholder="Jordan Requester"
               />
             </div>
 
@@ -229,7 +229,7 @@ export function StudentsPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                placeholder="student@example.com"
+                placeholder="requester@example.com"
               />
             </div>
 
@@ -242,7 +242,7 @@ export function StudentsPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                placeholder="student123"
+                placeholder="requester123"
               />
             </div>
 
@@ -251,7 +251,7 @@ export function StudentsPage() {
               disabled={isCreating}
               className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
             >
-              {isCreating ? "Creating..." : "Create Student"}
+              {isCreating ? "Creating..." : "Create Requester"}
             </button>
           </form>
 
@@ -273,11 +273,11 @@ export function StudentsPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  All Students
+                  All Requesters
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Showing {students.length} of {pagination.totalStudents}{" "}
-                  students
+                  requesters
                 </p>
               </div>
 
@@ -304,12 +304,12 @@ export function StudentsPage() {
 
           {isLoading && (
             <div className="p-6 text-sm text-slate-500">
-              Loading students...
+              Loading requesters...
             </div>
           )}
 
           {!isLoading && students.length === 0 && (
-            <div className="p-6 text-sm text-slate-500">No students found.</div>
+            <div className="p-6 text-sm text-slate-500">No requesters found.</div>
           )}
 
           {!isLoading && students.length > 0 && (
@@ -419,10 +419,10 @@ export function StudentsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  Edit Student
+                  Edit Requester
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Update student portal account details.
+                  Update requester portal account details.
                 </p>
               </div>
 

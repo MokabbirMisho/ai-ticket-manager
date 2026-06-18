@@ -21,8 +21,8 @@ test("admin can navigate through admin portal", async ({ page }) => {
   await page.getByRole("link", { name: /users/i }).click();
   await expect(page).toHaveURL(/users/);
 
-  // Students
-  await page.getByRole("link", { name: /students/i }).click();
+  // Requesters
+  await page.getByRole("link", { name: /requesters/i }).click();
   await expect(page).toHaveURL(/students/);
 
   // Knowledge Base

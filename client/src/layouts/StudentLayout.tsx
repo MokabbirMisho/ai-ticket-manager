@@ -10,7 +10,7 @@ export function StudentLayout() {
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link to="/student/dashboard">
             <h1 className="text-lg font-bold text-slate-900">
-              Student Support Portal
+              Requester Portal
             </h1>
             <p className="text-xs text-slate-500">AI Ticket Management</p>
           </Link>

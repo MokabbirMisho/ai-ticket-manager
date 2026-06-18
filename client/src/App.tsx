@@ -25,10 +25,10 @@ function App() {
       {/* Staff Login */}
       <Route path="/admin/login" element={<LoginPage />} />
 
-      {/* Student Login */}
+      {/* Requester Login */}
       <Route path="/student/login" element={<StudentLoginPage />} />
 
-      {/* Student Portal */}
+      {/* Requester Portal */}
       <Route
         element={
           <StudentProtectedRoute>

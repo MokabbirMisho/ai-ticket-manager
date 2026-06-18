@@ -10,7 +10,7 @@ export function AppLayout() {
           { label: "Dashboard", path: "/dashboard" },
           { label: "Tickets", path: "/tickets" },
           { label: "Users", path: "/users" },
-          { label: "Students", path: "/students" },
+          { label: "Requesters", path: "/students" },
           { label: "Knowledge Base", path: "/knowledge" },
         ]
       : [

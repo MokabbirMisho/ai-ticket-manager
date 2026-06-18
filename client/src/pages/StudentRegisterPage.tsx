@@ -6,9 +6,9 @@ export function StudentRegisterPage() {
   const navigate = useNavigate();
   const { register } = useStudentAuth();
 
-  const [name, setName] = useState("Rahman Student");
-  const [email, setEmail] = useState("student@example.com");
-  const [password, setPassword] = useState("student123");
+  const [name, setName] = useState("Rahman Requester");
+  const [email, setEmail] = useState("requester@example.com");
+  const [password, setPassword] = useState("requester123");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,7 +22,7 @@ export function StudentRegisterPage() {
       await register(name, email, password);
       navigate("/student/dashboard");
     } catch {
-      setError("Could not create student account");
+      setError("Could not create requester account");
     } finally {
       setIsSubmitting(false);
     }
@@ -32,7 +32,7 @@ export function StudentRegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <h1 className="text-center text-2xl font-bold text-slate-900">
-          Student Registration
+          Requester Registration
         </h1>
 
         <p className="mt-2 text-center text-sm text-slate-500">

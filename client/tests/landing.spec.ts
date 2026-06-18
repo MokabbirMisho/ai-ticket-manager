@@ -5,7 +5,7 @@ test("landing page loads", async ({ page }) => {
 
   await expect(
     page.getByRole("heading", {
-      name: /resolve student support requests faster with ai/i,
+      name: /manage service requests faster with ai/i,
     }),
   ).toBeVisible();
 

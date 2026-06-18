@@ -10,7 +10,7 @@ export function LandingPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold">AI Ticket Management</h1>
-            <p className="text-sm text-slate-500">Student Support Platform</p>
+            <p className="text-sm text-slate-500">AI Ticket Management SaaS</p>
           </div>
         </Link>
 
@@ -40,7 +40,7 @@ export function LandingPage() {
             to="/student/login"
             className="hidden rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 sm:inline-block"
           >
-            Student Login
+            Requester Login
           </Link>
 
           <Link
@@ -55,15 +55,15 @@ export function LandingPage() {
       <section className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2 lg:items-center">
         <div>
           <div className="mb-5 inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
-            AI-powered helpdesk for student support
+            AI-powered ticket management for teams, businesses, and service providers.
           </div>
 
           <h2 className="max-w-3xl text-5xl font-bold tracking-tight text-slate-950 md:text-6xl">
-            Resolve student support requests faster with AI.
+            Manage service requests faster with AI.
           </h2>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            A complete ticket management system where students submit issues,
+            A complete ticket management system where requesters submit issues,
             admins assign tickets, agents respond faster, and AI helps classify,
             summarize, and generate professional replies.
           </p>
@@ -83,7 +83,7 @@ export function LandingPage() {
               <div>
                 <h3 className="font-bold text-slate-900">Live Ticket Flow</h3>
                 <p className="text-sm text-slate-500">
-                  Student support workflow
+                  Requester support workflow
                 </p>
               </div>
               <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
@@ -94,8 +94,8 @@ export function LandingPage() {
             <div className="space-y-4">
               <FlowItem
                 number="1"
-                title="Student submits ticket"
-                text="Login issue, refund request, exam registration problem."
+                title="Requester submits ticket"
+                text="Login issue, billing question, service request, or operational problem."
               />
               <FlowItem
                 number="2"
@@ -123,15 +123,15 @@ export function LandingPage() {
             Everything needed for a modern support workflow
           </h2>
           <p className="mt-3 text-slate-600">
-            Built for students, admins, and support agents with AI assistance at
+            Built for requesters, admins, and support agents with AI assistance at
             the center.
           </p>
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <Feature
-            title="Student Portal"
-            text="Students can register, create tickets, track status, and view support responses."
+            title="Requester Portal"
+            text="Requesters can register, create tickets, track status, and view support responses."
           />
           <Feature
             title="Admin Dashboard"
@@ -147,7 +147,7 @@ export function LandingPage() {
           />
           <Feature
             title="AI Summaries"
-            text="Long student messages are summarized for faster review."
+            text="Long requester messages are summarized for faster review."
           />
           <Feature
             title="AI Suggested Replies"
@@ -164,11 +164,11 @@ export function LandingPage() {
 
           <div className="mt-8 grid gap-4 md:grid-cols-5">
             {[
-              "Student creates ticket",
+              "Requester creates ticket",
               "AI classifies issue",
               "Admin assigns agent",
               "Agent responds",
-              "Student tracks result",
+              "Requester tracks result",
             ].map((item, index) => (
               <div key={item} className="rounded-2xl bg-slate-50 p-5">
                 <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
@@ -187,7 +187,7 @@ export function LandingPage() {
             <div>
               <h2 className="text-3xl font-bold">Ready to test the system?</h2>
               <p className="mt-3 text-slate-300">
-                Start as a student and submit a support ticket, or login as
+                Start as a requester and submit a support ticket, or login as
                 staff to manage requests.
               </p>
             </div>
@@ -197,7 +197,7 @@ export function LandingPage() {
                 to="/student/login"
                 className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900"
               >
-                Student Login
+                Requester Login
               </Link>
 
               <Link
