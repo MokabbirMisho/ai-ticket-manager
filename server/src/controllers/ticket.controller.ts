@@ -1,10 +1,18 @@
 import type { Request, Response } from "express";
-import { TicketCategory, TicketStatus } from "@prisma/client";
+import { TicketCategory, TicketStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
 export const createTicket = async (req: Request, res: Response) => {
   try {
     const { subject, description, category } = req.body;
+    const tenantId = req.session.tenantId;
+
+    if (!tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
 
     if (!subject || !description) {
       return res.status(400).json({
@@ -18,6 +26,7 @@ export const createTicket = async (req: Request, res: Response) => {
         subject,
         description,
         category: category || TicketCategory.GENERAL_QUESTION,
+        tenantId,
       },
     });
 
@@ -40,11 +49,18 @@ export const listTickets = async (req: Request, res: Response) => {
   try {
     const { status, category, sort } = req.query;
 
-    const where: {
-      status?: TicketStatus;
-      category?: TicketCategory;
-      assignedAgentId?: string;
-    } = {};
+    const where: Prisma.TicketWhereInput = {};
+
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      where.tenantId = req.session.tenantId;
+    }
 
     if (typeof status === "string" && status) {
       where.status = status as TicketStatus;
@@ -115,12 +131,20 @@ export const getTicket = async (req: Request, res: Response) => {
       });
     }
 
-    const where: {
-      id: string;
-      assignedAgentId?: string;
-    } = {
+    const where: Prisma.TicketWhereInput = {
       id: ticketId,
     };
+
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      where.tenantId = req.session.tenantId;
+    }
 
     if (req.session.role === "AGENT") {
       if (!req.session.userId) {
@@ -188,6 +212,7 @@ export const updateTicket = async (req: Request, res: Response) => {
 
     const currentUserId = req.session.userId;
     const currentRole = req.session.role;
+    const tenantId = req.session.tenantId;
 
     if (!currentUserId || !currentRole) {
       return res.status(401).json({
@@ -196,14 +221,29 @@ export const updateTicket = async (req: Request, res: Response) => {
       });
     }
 
+    if (currentRole !== "SUPER_ADMIN" && !tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
     const { status, category, assignedAgentId, aiSummary, aiReply } = req.body;
 
-    const ticketWhere: {
-      id: string;
-      assignedAgentId?: string;
-    } = {
+    const ticketWhere: Prisma.TicketWhereInput = {
       id: ticketId,
     };
+
+    if (currentRole !== "SUPER_ADMIN") {
+      if (!tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      ticketWhere.tenantId = tenantId;
+    }
 
     if (currentRole === "AGENT") {
       ticketWhere.assignedAgentId = currentUserId;
@@ -232,7 +272,12 @@ export const updateTicket = async (req: Request, res: Response) => {
         where: { id: assignedAgentId },
       });
 
-      if (!agent || !agent.isActive || agent.role !== "AGENT") {
+      if (
+        !agent ||
+        !agent.isActive ||
+        agent.role !== "AGENT" ||
+        (currentRole !== "SUPER_ADMIN" && agent.tenantId !== tenantId)
+      ) {
         return res.status(400).json({
           status: "fail",
           message: "Assigned agent is invalid",

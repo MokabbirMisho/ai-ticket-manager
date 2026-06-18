@@ -7,11 +7,13 @@ import {
   updateArticle,
 } from "../controllers/knowledge.controller.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.middleware.js";
+import { requireTenant } from "../middleware/tenant.middleware.js";
 
 const router = Router();
 
 router.use(requireAuth);
 router.use(requireAdmin);
+router.use(requireTenant);
 
 router.route("/").get(getArticles).post(createArticle);
 

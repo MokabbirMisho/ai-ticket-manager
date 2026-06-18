@@ -12,5 +12,12 @@ export const requireStudentAuth = (
     });
   }
 
+  if (!req.session.tenantId) {
+    return res.status(403).json({
+      status: "fail",
+      message: "Tenant context required",
+    });
+  }
+
   next();
 };

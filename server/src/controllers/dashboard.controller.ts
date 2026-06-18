@@ -1,9 +1,27 @@
 import type { Request, Response } from "express";
-import { TicketStatus } from "@prisma/client";
+import { TicketStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
-export const getDashboardStats = async (_req: Request, res: Response) => {
+export const getDashboardStats = async (req: Request, res: Response) => {
   try {
+    const ticketWhere: Prisma.TicketWhereInput = {};
+    const agentWhere: Prisma.UserWhereInput = {
+      role: "AGENT",
+      isActive: true,
+    };
+
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      ticketWhere.tenantId = req.session.tenantId;
+      agentWhere.tenantId = req.session.tenantId;
+    }
+
     const [
       totalTickets,
       openTickets,
@@ -15,20 +33,23 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       technicalQuestions,
       refundRequests,
     ] = await Promise.all([
-      prisma.ticket.count(),
       prisma.ticket.count({
-        where: { status: TicketStatus.OPEN },
+        where: ticketWhere,
       }),
       prisma.ticket.count({
-        where: { status: TicketStatus.RESOLVED },
+        where: { ...ticketWhere, status: TicketStatus.OPEN },
       }),
       prisma.ticket.count({
-        where: { status: TicketStatus.CLOSED },
+        where: { ...ticketWhere, status: TicketStatus.RESOLVED },
+      }),
+      prisma.ticket.count({
+        where: { ...ticketWhere, status: TicketStatus.CLOSED },
       }),
       prisma.user.count({
-        where: { role: "AGENT", isActive: true },
+        where: agentWhere,
       }),
       prisma.ticket.findMany({
+        where: ticketWhere,
         take: 5,
         orderBy: { createdAt: "desc" },
         include: {
@@ -42,13 +63,13 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
         },
       }),
       prisma.ticket.count({
-        where: { category: "GENERAL_QUESTION" },
+        where: { ...ticketWhere, category: "GENERAL_QUESTION" },
       }),
       prisma.ticket.count({
-        where: { category: "TECHNICAL_QUESTION" },
+        where: { ...ticketWhere, category: "TECHNICAL_QUESTION" },
       }),
       prisma.ticket.count({
-        where: { category: "REFUND_REQUEST" },
+        where: { ...ticketWhere, category: "REFUND_REQUEST" },
       }),
     ]);
 

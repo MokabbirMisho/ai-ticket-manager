@@ -7,6 +7,7 @@ datasource db {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   AGENT
 }
@@ -45,51 +46,65 @@ enum PaymentProvider {
 }
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  country   String?
-  industry  String?
-  isActive  Boolean  @default(true)
+  id       String  @id @default(uuid())
+  name     String
+  slug     String  @unique
+  country  String?
+  industry String?
+  isActive Boolean @default(true)
 
-  plan                 Plan               @default(FREE)
-  subscriptionStatus   SubscriptionStatus @default(TRIAL)
-  subscriptionEndsAt   DateTime?
-  paymentProvider      PaymentProvider    @default(MANUAL)
+  plan               Plan               @default(FREE)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  subscriptionEndsAt DateTime?
+  paymentProvider    PaymentProvider    @default(MANUAL)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  users             User[]
+  students          Student[]
+  tickets           Ticket[]
+  knowledgeArticles KnowledgeArticle[]
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
 
-  role      Role     @default(AGENT)
+  role Role @default(AGENT)
 
-  isActive  Boolean  @default(true)
+  isActive Boolean @default(true)
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   assignedTickets Ticket[] @relation("AssignedTickets")
+
+  @@index([tenantId])
 }
 
 model Student {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  isActive  Boolean  @default(true)
+  id       String  @id @default(uuid())
+  name     String
+  email    String  @unique
+  password String
+  isActive Boolean @default(true)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tickets   Ticket[]
-}
+  tickets Ticket[]
 
+  @@index([tenantId])
+}
 
 model Ticket {
   id          String         @id @default(uuid())
@@ -100,25 +115,35 @@ model Ticket {
   aiSummary   String?
   aiReply     String?
 
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   assignedAgentId String?
-  assignedAgent   User? @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
+  assignedAgent   User?   @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
 
   studentId String?
   student   Student? @relation(fields: [studentId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model KnowledgeArticle {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  category  String
-  isActive  Boolean  @default(true)
+  id       String  @id @default(uuid())
+  title    String
+  content  String
+  category String
+  isActive Boolean @default(true)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model UserSession {

@@ -5,6 +5,14 @@ import { prisma } from "../config/prisma.js";
 export const createArticle = async (req: Request, res: Response) => {
   try {
     const { title, content, category } = req.body;
+    const tenantId = req.session.tenantId;
+
+    if (!tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
 
     if (
       typeof title !== "string" ||
@@ -25,6 +33,7 @@ export const createArticle = async (req: Request, res: Response) => {
         title: title.trim(),
         content: content.trim(),
         category: category.trim(),
+        tenantId,
       },
     });
 
@@ -56,6 +65,17 @@ export const getArticles = async (req: Request, res: Response) => {
       typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const where: Prisma.KnowledgeArticleWhereInput = {};
+
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      where.tenantId = req.session.tenantId;
+    }
 
     if (search) {
       where.OR = [
@@ -129,9 +149,19 @@ export const getArticle = async (req: Request, res: Response) => {
       });
     }
 
-    const article = await prisma.knowledgeArticle.findUnique({
+    if (req.session.role !== "SUPER_ADMIN" && !req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const article = await prisma.knowledgeArticle.findFirst({
       where: {
         id: articleId,
+        ...(req.session.role === "SUPER_ADMIN"
+          ? {}
+          : { tenantId: req.session.tenantId }),
       },
     });
 
@@ -170,6 +200,29 @@ export const updateArticle = async (req: Request, res: Response) => {
     }
 
     const { title, content, category, isActive } = req.body;
+
+    if (req.session.role !== "SUPER_ADMIN" && !req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const existingArticle = await prisma.knowledgeArticle.findFirst({
+      where: {
+        id: articleId,
+        ...(req.session.role === "SUPER_ADMIN"
+          ? {}
+          : { tenantId: req.session.tenantId }),
+      },
+    });
+
+    if (!existingArticle) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Article not found",
+      });
+    }
 
     const data: Prisma.KnowledgeArticleUpdateInput = {};
 
@@ -220,6 +273,29 @@ export const deleteArticle = async (req: Request, res: Response) => {
       return res.status(400).json({
         status: "fail",
         message: "Valid article ID is required",
+      });
+    }
+
+    if (req.session.role !== "SUPER_ADMIN" && !req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const existingArticle = await prisma.knowledgeArticle.findFirst({
+      where: {
+        id: articleId,
+        ...(req.session.role === "SUPER_ADMIN"
+          ? {}
+          : { tenantId: req.session.tenantId }),
+      },
+    });
+
+    if (!existingArticle) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Article not found",
       });
     }
 

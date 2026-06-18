@@ -40,6 +40,36 @@ async function main() {
 
   console.log("Default tenant ready:", tenant.slug);
 
+  await prisma.user.updateMany({
+    where: {
+      tenantId: null,
+      role: {
+        not: Role.SUPER_ADMIN,
+      },
+    },
+    data: {
+      tenantId: tenant.id,
+    },
+  });
+
+  await prisma.$executeRaw`
+    UPDATE "Student"
+    SET "tenantId" = ${tenant.id}
+    WHERE "tenantId" IS NULL
+  `;
+
+  await prisma.$executeRaw`
+    UPDATE "Ticket"
+    SET "tenantId" = ${tenant.id}
+    WHERE "tenantId" IS NULL
+  `;
+
+  await prisma.$executeRaw`
+    UPDATE "KnowledgeArticle"
+    SET "tenantId" = ${tenant.id}
+    WHERE "tenantId" IS NULL
+  `;
+
   const admin = await prisma.user.upsert({
     where: {
       email: "admin@example.com",
@@ -51,6 +81,7 @@ async function main() {
       password: hashedPassword,
       role: Role.ADMIN,
       isActive: true,
+      tenantId: tenant.id,
     },
   });
 

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
+import { getOrCreateDefaultTenant } from "../middleware/tenant.middleware.js";
 
 export const registerStudent = async (req: Request, res: Response) => {
   try {
@@ -25,12 +26,14 @@ export const registerStudent = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
+    const tenant = await getOrCreateDefaultTenant();
 
     const student = await prisma.student.create({
       data: {
         name,
         email,
         password: hashedPassword,
+        tenantId: tenant.id,
       },
       select: {
         id: true,
@@ -43,6 +46,7 @@ export const registerStudent = async (req: Request, res: Response) => {
 
     req.session.studentId = student.id;
     req.session.studentEmail = student.email;
+    req.session.tenantId = tenant.id;
 
     return res.status(201).json({
       status: "success",
@@ -72,6 +76,9 @@ export const loginStudent = async (req: Request, res: Response) => {
 
     const student = await prisma.student.findUnique({
       where: { email },
+      include: {
+        tenant: true,
+      },
     });
 
     if (!student || !student.isActive) {
@@ -90,8 +97,16 @@ export const loginStudent = async (req: Request, res: Response) => {
       });
     }
 
+    if (!student.tenant.isActive) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Workspace is inactive",
+      });
+    }
+
     req.session.studentId = student.id;
     req.session.studentEmail = student.email;
+    req.session.tenantId = student.tenantId;
 
     return res.status(200).json({
       status: "success",
@@ -102,6 +117,7 @@ export const loginStudent = async (req: Request, res: Response) => {
           name: student.name,
           email: student.email,
           isActive: student.isActive,
+          tenantId: student.tenantId,
         },
       },
     });
@@ -148,17 +164,25 @@ export const getStudentMe = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
+        tenant: {
+          select: {
+            isActive: true,
+          },
+        },
       },
     });
 
-    if (!student || !student.isActive) {
+    if (!student || !student.isActive || !student.tenant.isActive) {
       return res.status(401).json({
         status: "fail",
         message: "Student not found or inactive",
       });
     }
+
+    req.session.tenantId = student.tenantId;
 
     return res.status(200).json({
       status: "success",

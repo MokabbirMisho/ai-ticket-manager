@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { TicketCategory } from "@prisma/client";
+import { TicketCategory, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import {
   classifyTicketWithAI,
@@ -19,11 +19,23 @@ export const summarizeTicket = async (req: Request, res: Response) => {
     }
 
     const ticketId: string = ticketIdParam;
+    const ticketWhere: Prisma.TicketWhereInput = {
+      id: ticketId,
+    };
 
-    const ticket = await prisma.ticket.findUnique({
-      where: {
-        id: ticketId,
-      },
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      ticketWhere.tenantId = req.session.tenantId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({
+      where: ticketWhere,
     });
 
     if (!ticket) {
@@ -93,11 +105,23 @@ export const generateReply = async (req: Request, res: Response) => {
     }
 
     const ticketId: string = ticketIdParam;
+    const ticketWhere: Prisma.TicketWhereInput = {
+      id: ticketId,
+    };
 
-    const ticket = await prisma.ticket.findUnique({
-      where: {
-        id: ticketId,
-      },
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      ticketWhere.tenantId = req.session.tenantId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({
+      where: ticketWhere,
       include: {
         student: {
           select: {
@@ -130,30 +154,42 @@ export const generateReply = async (req: Request, res: Response) => {
       .filter((word) => word.length > 3)
       .slice(0, 10);
 
-    const relatedArticles = await prisma.knowledgeArticle.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          ...keywords.map((keyword) => ({
-            title: {
-              contains: keyword,
-              mode: "insensitive" as const,
-            },
-          })),
-          ...keywords.map((keyword) => ({
-            content: {
-              contains: keyword,
-              mode: "insensitive" as const,
-            },
-          })),
-          {
-            category: {
-              contains: String(category),
-              mode: "insensitive" as const,
-            },
+    const articleWhere: Prisma.KnowledgeArticleWhereInput = {
+      isActive: true,
+      ...(req.session.role === "SUPER_ADMIN"
+        ? {}
+        : { tenantId: req.session.tenantId }),
+      OR: [
+        ...keywords.map((keyword) => ({
+          title: {
+            contains: keyword,
+            mode: "insensitive" as const,
           },
-        ],
-      },
+        })),
+        ...keywords.map((keyword) => ({
+          content: {
+            contains: keyword,
+            mode: "insensitive" as const,
+          },
+        })),
+        {
+          category: {
+            contains: String(category),
+            mode: "insensitive" as const,
+          },
+        },
+      ],
+    };
+
+    const fallbackArticleWhere: Prisma.KnowledgeArticleWhereInput = {
+      isActive: true,
+      ...(req.session.role === "SUPER_ADMIN"
+        ? {}
+        : { tenantId: req.session.tenantId }),
+    };
+
+    const relatedArticles = await prisma.knowledgeArticle.findMany({
+      where: articleWhere,
       take: 3,
       orderBy: {
         updatedAt: "desc",
@@ -164,9 +200,7 @@ export const generateReply = async (req: Request, res: Response) => {
       relatedArticles.length > 0
         ? relatedArticles
         : await prisma.knowledgeArticle.findMany({
-            where: {
-              isActive: true,
-            },
+            where: fallbackArticleWhere,
             take: 3,
             orderBy: {
               updatedAt: "desc",
@@ -253,11 +287,23 @@ export const classifyTicket = async (req: Request, res: Response) => {
     }
 
     const ticketId: string = ticketIdParam;
+    const ticketWhere: Prisma.TicketWhereInput = {
+      id: ticketId,
+    };
 
-    const ticket = await prisma.ticket.findUnique({
-      where: {
-        id: ticketId,
-      },
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      ticketWhere.tenantId = req.session.tenantId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({
+      where: ticketWhere,
     });
 
     if (!ticket) {

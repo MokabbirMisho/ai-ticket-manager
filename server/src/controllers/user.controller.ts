@@ -1,11 +1,19 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { Role } from "@prisma/client";
+import { Role, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
 export const createAgent = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+    const tenantId = req.session.tenantId;
+
+    if (!tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -33,12 +41,14 @@ export const createAgent = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         role: Role.AGENT,
+        tenantId,
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
       },
@@ -67,16 +77,20 @@ export const listUsers = async (req: Request, res: Response) => {
     const role = typeof req.query.role === "string" ? req.query.role : "";
     const status = typeof req.query.status === "string" ? req.query.status : "";
 
-    const where: {
-      role?: "ADMIN" | "AGENT";
-      isActive?: boolean;
-      OR?: {
-        name?: { contains: string; mode: "insensitive" };
-        email?: { contains: string; mode: "insensitive" };
-      }[];
-    } = {};
+    const where: Prisma.UserWhereInput = {};
 
-    if (role === "ADMIN" || role === "AGENT") {
+    if (req.session.role !== "SUPER_ADMIN") {
+      if (!req.session.tenantId) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Tenant context required",
+        });
+      }
+
+      where.tenantId = req.session.tenantId;
+    }
+
+    if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "AGENT") {
       where.role = role;
     }
 
@@ -118,6 +132,7 @@ export const listUsers = async (req: Request, res: Response) => {
           name: true,
           email: true,
           role: true,
+          tenantId: true,
           isActive: true,
           createdAt: true,
           updatedAt: true,
@@ -162,10 +177,22 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
 
+    if (req.session.role !== "SUPER_ADMIN" && !req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
     const { name, email, password, role, isActive } = req.body;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        ...(req.session.role === "SUPER_ADMIN"
+          ? {}
+          : { tenantId: req.session.tenantId }),
+      },
     });
 
     if (!existingUser) {
@@ -179,14 +206,14 @@ export const updateUser = async (req: Request, res: Response) => {
       name?: string;
       email?: string;
       password?: string;
-      role?: "ADMIN" | "AGENT";
+      role?: "SUPER_ADMIN" | "ADMIN" | "AGENT";
       isActive?: boolean;
     } = {};
 
     if (name) data.name = name;
     if (email) data.email = email;
 
-    if (role === "ADMIN" || role === "AGENT") {
+    if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "AGENT") {
       data.role = role;
     }
 
@@ -206,6 +233,7 @@ export const updateUser = async (req: Request, res: Response) => {
         name: true,
         email: true,
         role: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -238,8 +266,20 @@ export const deactivateUser = async (req: Request, res: Response) => {
       });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
+    if (req.session.role !== "SUPER_ADMIN" && !req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        ...(req.session.role === "SUPER_ADMIN"
+          ? {}
+          : { tenantId: req.session.tenantId }),
+      },
     });
 
     if (!existingUser) {
@@ -266,6 +306,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
         name: true,
         email: true,
         role: true,
+        tenantId: true,
         isActive: true,
         updatedAt: true,
       },

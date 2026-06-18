@@ -27,7 +27,7 @@ export const requireAdmin = (
     });
   }
 
-  if (req.session.role !== "ADMIN") {
+  if (req.session.role !== "ADMIN" && req.session.role !== "SUPER_ADMIN") {
     return res.status(403).json({
       status: "fail",
       message: "Admin access required",

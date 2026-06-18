@@ -6,8 +6,9 @@ export const createStudentTicket = async (req: Request, res: Response) => {
     const { subject, description } = req.body;
 
     const studentId = req.session.studentId;
+    const tenantId = req.session.tenantId;
 
-    if (!studentId) {
+    if (!studentId || !tenantId) {
       return res.status(401).json({
         status: "fail",
         message: "Student authentication required",
@@ -31,6 +32,7 @@ export const createStudentTicket = async (req: Request, res: Response) => {
         subject: subject.trim(),
         description: description.trim(),
         studentId,
+        tenantId,
       },
     });
 
@@ -53,8 +55,9 @@ export const createStudentTicket = async (req: Request, res: Response) => {
 export const getMyTickets = async (req: Request, res: Response) => {
   try {
     const studentId = req.session.studentId;
+    const tenantId = req.session.tenantId;
 
-    if (!studentId) {
+    if (!studentId || !tenantId) {
       return res.status(401).json({
         status: "fail",
         message: "Student authentication required",
@@ -64,6 +67,7 @@ export const getMyTickets = async (req: Request, res: Response) => {
     const tickets = await prisma.ticket.findMany({
       where: {
         studentId,
+        tenantId,
       },
       orderBy: {
         createdAt: "desc",
@@ -90,9 +94,10 @@ export const getMyTickets = async (req: Request, res: Response) => {
 export const getMyTicket = async (req: Request, res: Response) => {
   try {
     const studentId = req.session.studentId;
+    const tenantId = req.session.tenantId;
     const ticketId = req.params.ticketId;
 
-    if (!studentId) {
+    if (!studentId || !tenantId) {
       return res.status(401).json({
         status: "fail",
         message: "Student authentication required",
@@ -110,6 +115,7 @@ export const getMyTicket = async (req: Request, res: Response) => {
       where: {
         id: ticketId,
         studentId,
+        tenantId,
       },
       include: {
         assignedAgent: {

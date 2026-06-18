@@ -6,6 +6,14 @@ import { prisma } from "../config/prisma.js";
 export const createStudent = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+    const tenantId = req.session.tenantId;
+
+    if (!tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
 
     if (
       typeof name !== "string" ||
@@ -40,11 +48,13 @@ export const createStudent = async (req: Request, res: Response) => {
         email: email.trim(),
         password: hashedPassword,
         isActive: true,
+        tenantId,
       },
       select: {
         id: true,
         name: true,
         email: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -79,7 +89,16 @@ export const listStudents = async (req: Request, res: Response) => {
 
     const status = typeof req.query.status === "string" ? req.query.status : "";
 
-    const where: Prisma.StudentWhereInput = {};
+    if (!req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const where: Prisma.StudentWhereInput = {
+      tenantId: req.session.tenantId,
+    };
 
     if (status === "active") {
       where.isActive = true;
@@ -118,6 +137,7 @@ export const listStudents = async (req: Request, res: Response) => {
           id: true,
           name: true,
           email: true,
+          tenantId: true,
           isActive: true,
           createdAt: true,
           updatedAt: true,
@@ -168,10 +188,20 @@ export const updateStudent = async (req: Request, res: Response) => {
       });
     }
 
+    if (!req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
     const { name, email, password, isActive } = req.body;
 
-    const existingStudent = await prisma.student.findUnique({
-      where: { id: studentId },
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        tenantId: req.session.tenantId,
+      },
     });
 
     if (!existingStudent) {
@@ -206,6 +236,7 @@ export const updateStudent = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -238,8 +269,18 @@ export const deactivateStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const existingStudent = await prisma.student.findUnique({
-      where: { id: studentId },
+    if (!req.session.tenantId) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Tenant context required",
+      });
+    }
+
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        tenantId: req.session.tenantId,
+      },
     });
 
     if (!existingStudent) {
@@ -258,6 +299,7 @@ export const deactivateStudent = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
+        tenantId: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
