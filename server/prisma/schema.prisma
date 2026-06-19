@@ -63,7 +63,7 @@ model Tenant {
   updatedAt DateTime @updatedAt
 
   users             User[]
-  students          Student[]
+  requesters        Requester[]
   tickets           Ticket[]
   knowledgeArticles KnowledgeArticle[]
 }
@@ -90,7 +90,7 @@ model User {
   @@index([tenantId])
 }
 
-model Student {
+model Requester {
   id       String  @id @default(uuid())
   name     String
   email    String  @unique
@@ -123,8 +123,8 @@ model Ticket {
   assignedAgentId String?
   assignedAgent   User?   @relation("AssignedTickets", fields: [assignedAgentId], references: [id])
 
-  studentId String?
-  student   Student? @relation(fields: [studentId], references: [id])
+  requesterId String?
+  requester   Requester? @relation(fields: [requesterId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

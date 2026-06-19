@@ -2,6 +2,13 @@ import type { Request, Response } from "express";
 import { TicketCategory, TicketStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
+const withRequesterCompatibility = <T extends { requester?: unknown }>(
+  ticket: T,
+) => ({
+  ...ticket,
+  student: ticket.requester,
+});
+
 export const createTicket = async (req: Request, res: Response) => {
   try {
     const { subject, description, category } = req.body;
@@ -95,7 +102,7 @@ export const listTickets = async (req: Request, res: Response) => {
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -108,7 +115,7 @@ export const listTickets = async (req: Request, res: Response) => {
     return res.status(200).json({
       status: "success",
       results: tickets.length,
-      data: { tickets },
+      data: { tickets: tickets.map(withRequesterCompatibility) },
     });
   } catch (error) {
     console.error("List tickets error:", error);
@@ -168,7 +175,7 @@ export const getTicket = async (req: Request, res: Response) => {
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -187,7 +194,7 @@ export const getTicket = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      data: { ticket },
+      data: { ticket: withRequesterCompatibility(ticket) },
     });
   } catch (error) {
     console.error("Get ticket error:", error);
@@ -303,7 +310,7 @@ export const updateTicket = async (req: Request, res: Response) => {
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -316,7 +323,7 @@ export const updateTicket = async (req: Request, res: Response) => {
     return res.status(200).json({
       status: "success",
       message: "Ticket updated successfully",
-      data: { ticket },
+      data: { ticket: withRequesterCompatibility(ticket) },
     });
   } catch (error) {
     console.error("Update ticket error:", error);

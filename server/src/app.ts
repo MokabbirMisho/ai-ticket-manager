@@ -8,9 +8,9 @@ import userRoutes from "./routes/user.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
-import studentAuthRoutes from "./routes/studentAuth.routes.js";
-import studentTicketRoutes from "./routes/studentTicket.routes.js";
-import studentRoutes from "./routes/student.routes.js";
+import requesterAuthRoutes from "./routes/requesterAuth.routes.js";
+import requesterTicketRoutes from "./routes/requesterTicket.routes.js";
+import requesterRoutes from "./routes/requester.routes.js";
 import knowledgeRoutes from "./routes/knowledge.routes.js";
 import superTenantRoutes from "./routes/superTenant.routes.js";
 import superUserRoutes from "./routes/superUser.routes.js";
@@ -37,9 +37,13 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
 
-app.use("/api/student/auth", studentAuthRoutes);
-app.use("/api/student/tickets", studentTicketRoutes);
-app.use("/api/students", studentRoutes);
+app.use("/api/requester/auth", requesterAuthRoutes);
+app.use("/api/requester/tickets", requesterTicketRoutes);
+app.use("/api/requesters", requesterRoutes);
+
+app.use("/api/student/auth", requesterAuthRoutes);
+app.use("/api/student/tickets", requesterTicketRoutes);
+app.use("/api/students", requesterRoutes);
 
 app.use("/api/knowledge", knowledgeRoutes);
 app.use("/api/super/tenants", superTenantRoutes);

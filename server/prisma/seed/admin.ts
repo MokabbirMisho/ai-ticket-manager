@@ -34,7 +34,7 @@ const SUPER_ADMIN_EMAIL = "mokabbirmiso1992@gmail.com";
 const OLD_SEED_ADMIN_EMAIL = ["admin", "example.com"].join("@");
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("admin123", 12);
+  const hashedPassword = await bcrypt.hash("Misho1234@", 12);
 
   const tenant = await prisma.tenant.upsert({
     where: {
@@ -68,7 +68,7 @@ async function main() {
   });
 
   await prisma.$executeRaw`
-    UPDATE "Student"
+    UPDATE "Requester"
     SET "tenantId" = ${tenant.id}
     WHERE "tenantId" IS NULL
   `;

@@ -5,7 +5,7 @@ declare module "express-session" {
     userId?: string;
     role?: "SUPER_ADMIN" | "ADMIN" | "AGENT";
     tenantId?: string;
-    studentId?: string;
-    studentEmail?: string;
+    requesterId?: string;
+    requesterEmail?: string;
   }
 }

@@ -1,18 +1,18 @@
 import { Router } from "express";
 import {
-  createStudentTicket,
+  createRequesterTicket,
   getMyTicket,
   getMyTickets,
-} from "../controllers/studentTicket.controller.js";
-import { requireStudentAuth } from "../middleware/studentAuth.middleware.js";
+} from "../controllers/requesterTicket.controller.js";
+import { requireRequesterAuth } from "../middleware/requesterAuth.middleware.js";
 import { requireActiveTenant } from "../middleware/tenant.middleware.js";
 
 const router = Router();
 
-router.use(requireStudentAuth);
+router.use(requireRequesterAuth);
 router.use(requireActiveTenant);
 
-router.post("/", createStudentTicket);
+router.post("/", createRequesterTicket);
 router.get("/", getMyTickets);
 router.get("/:ticketId", getMyTicket);
 

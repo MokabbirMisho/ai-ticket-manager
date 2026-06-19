@@ -82,7 +82,7 @@ export const getAllTenants = async (req: Request, res: Response) => {
           _count: {
             select: {
               users: true,
-              students: true,
+              requesters: true,
               tickets: true,
               knowledgeArticles: true,
             },
@@ -92,11 +92,19 @@ export const getAllTenants = async (req: Request, res: Response) => {
       prisma.tenant.count({ where }),
     ]);
 
+    const tenantsWithCompatibilityCounts = tenants.map((tenant) => ({
+      ...tenant,
+      _count: {
+        ...tenant._count,
+        students: tenant._count.requesters,
+      },
+    }));
+
     return res.status(200).json({
       status: "success",
-      results: tenants.length,
+      results: tenantsWithCompatibilityCounts.length,
       data: {
-        tenants,
+        tenants: tenantsWithCompatibilityCounts,
         pagination: {
           page,
           limit,
@@ -151,7 +159,7 @@ export const getTenantById = async (req: Request, res: Response) => {
         _count: {
           select: {
             users: true,
-            students: true,
+            requesters: true,
             tickets: true,
             knowledgeArticles: true,
           },
@@ -172,7 +180,8 @@ export const getTenantById = async (req: Request, res: Response) => {
         tenant,
         usage: {
           users: tenant._count.users,
-          students: tenant._count.students,
+          students: tenant._count.requesters,
+          requesters: tenant._count.requesters,
           tickets: tenant._count.tickets,
           knowledgeArticles: tenant._count.knowledgeArticles,
         },

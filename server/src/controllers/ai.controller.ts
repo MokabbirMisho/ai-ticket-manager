@@ -7,6 +7,13 @@ import {
   generateTicketSummary,
 } from "../services/openai.service.js";
 
+const withRequesterCompatibility = <T extends { requester?: unknown }>(
+  ticket: T,
+) => ({
+  ...ticket,
+  student: ticket.requester,
+});
+
 export const summarizeTicket = async (req: Request, res: Response) => {
   try {
     const ticketIdParam = req.params.ticketId;
@@ -66,7 +73,7 @@ export const summarizeTicket = async (req: Request, res: Response) => {
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -80,7 +87,7 @@ export const summarizeTicket = async (req: Request, res: Response) => {
       status: "success",
       message: "AI summary generated successfully",
       data: {
-        ticket: updatedTicket,
+        ticket: withRequesterCompatibility(updatedTicket),
       },
     });
   } catch (error) {
@@ -123,7 +130,7 @@ export const generateReply = async (req: Request, res: Response) => {
     const ticket = await prisma.ticket.findFirst({
       where: ticketWhere,
       include: {
-        student: {
+        requester: {
           select: {
             name: true,
           },
@@ -222,7 +229,7 @@ Content: ${article.content}
       subject,
       description,
       summary: ticket.aiSummary || "",
-      studentName: ticket.student?.name || "Student",
+      requesterName: ticket.requester?.name || "Requester",
       agentName: ticket.assignedAgent?.name || "Support Team",
       knowledgeContext,
     });
@@ -243,7 +250,7 @@ Content: ${article.content}
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -257,7 +264,7 @@ Content: ${article.content}
       status: "success",
       message: "AI reply generated successfully using knowledge base",
       data: {
-        ticket: updatedTicket,
+        ticket: withRequesterCompatibility(updatedTicket),
         knowledgeArticlesUsed: articlesForContext.map((article) => ({
           id: article.id,
           title: article.title,
@@ -350,7 +357,7 @@ export const classifyTicket = async (req: Request, res: Response) => {
             role: true,
           },
         },
-        student: {
+        requester: {
           select: {
             id: true,
             name: true,
@@ -364,7 +371,7 @@ export const classifyTicket = async (req: Request, res: Response) => {
       status: "success",
       message: "Ticket classified successfully",
       data: {
-        ticket: updatedTicket,
+        ticket: withRequesterCompatibility(updatedTicket),
       },
     });
   } catch (error) {

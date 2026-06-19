@@ -1,10 +1,10 @@
 import { Router } from "express";
 import {
-  createStudent,
-  deactivateStudent,
-  listStudents,
-  updateStudent,
-} from "../controllers/student.controller.js";
+  createRequester,
+  deactivateRequester,
+  listRequesters,
+  updateRequester,
+} from "../controllers/requester.controller.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.middleware.js";
 import {
   requireActiveTenant,
@@ -18,9 +18,9 @@ router.use(requireAdmin);
 router.use(requireTenant);
 router.use(requireActiveTenant);
 
-router.get("/", listStudents);
-router.post("/", createStudent);
-router.patch("/:id", updateStudent);
-router.delete("/:id", deactivateStudent);
+router.get("/", listRequesters);
+router.post("/", createRequester);
+router.patch("/:id", updateRequester);
+router.delete("/:id", deactivateRequester);
 
 export default router;

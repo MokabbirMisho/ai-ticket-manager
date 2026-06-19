@@ -28,14 +28,14 @@ export async function generateAIReply({
   subject,
   description,
   summary,
-  studentName,
+  requesterName,
   agentName,
   knowledgeContext,
 }: {
   subject: string;
   description: string;
   summary: string;
-  studentName: string;
+  requesterName: string;
   agentName?: string | null;
   knowledgeContext?: string;
 }) {
@@ -44,12 +44,12 @@ export async function generateAIReply({
   const response = await openai.responses.create({
     model: OPENAI_MODEL,
     input: `
-You are a professional student support agent.
+You are a professional customer support agent.
 
-Write a helpful support reply for the student.
+Write a helpful support reply for the requester/customer.
 
-Student Name:
-${studentName}
+Requester Name:
+${requesterName}
 
 Agent Name:
 ${finalAgentName}
@@ -67,15 +67,15 @@ Relevant Knowledge Base Information:
 ${knowledgeContext || "No specific knowledge base article was found."}
 
 Requirements:
-- Start with "Dear ${studentName},"
+- Start with "Dear ${requesterName},"
 - End with:
   Best regards,
   ${finalAgentName}
 - Use the knowledge base information when it is relevant.
 - If the knowledge base information is not relevant, answer based on the ticket only.
 - Do not invent university policies, deadlines, fees, or processing times.
-- Do not mention "knowledge base" to the student.
-- Do not use placeholders like [User], [Your Name], [Student Name], or [Agent Name].
+- Do not mention "knowledge base" to the requester/customer.
+- Do not use placeholders like [User], [Your Name], [Requester Name], or [Agent Name].
 - Be professional, friendly, short, and actionable.
 - Return only the final reply.
 `,

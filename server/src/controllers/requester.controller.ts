@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
 
-export const createStudent = async (req: Request, res: Response) => {
+export const createRequester = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
     const tenantId = req.session.tenantId;
@@ -29,20 +29,20 @@ export const createStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const existingStudent = await prisma.student.findUnique({
+    const existingRequester = await prisma.requester.findUnique({
       where: { email: email.trim() },
     });
 
-    if (existingStudent) {
+    if (existingRequester) {
       return res.status(409).json({
         status: "fail",
-        message: "Student with this email already exists",
+        message: "Requester with this email already exists",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const student = await prisma.student.create({
+    const requester = await prisma.requester.create({
       data: {
         name: name.trim(),
         email: email.trim(),
@@ -63,20 +63,20 @@ export const createStudent = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       status: "success",
-      message: "Student created successfully",
-      data: { student },
+      message: "Requester created successfully",
+      data: { requester, student: requester },
     });
   } catch (error) {
-    console.error("Create student error:", error);
+    console.error("Create requester error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while creating student",
+      message: "Something went wrong while creating requester",
     });
   }
 };
 
-export const listStudents = async (req: Request, res: Response) => {
+export const listRequesters = async (req: Request, res: Response) => {
   try {
     const page =
       typeof req.query.page === "string" ? Number(req.query.page) || 1 : 1;
@@ -96,7 +96,7 @@ export const listStudents = async (req: Request, res: Response) => {
       });
     }
 
-    const where: Prisma.StudentWhereInput = {
+    const where: Prisma.RequesterWhereInput = {
       tenantId: req.session.tenantId,
     };
 
@@ -125,8 +125,8 @@ export const listStudents = async (req: Request, res: Response) => {
       ];
     }
 
-    const [students, totalStudents] = await Promise.all([
-      prisma.student.findMany({
+    const [requesters, totalRequesters] = await Promise.all([
+      prisma.requester.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
@@ -149,42 +149,44 @@ export const listStudents = async (req: Request, res: Response) => {
         },
       }),
 
-      prisma.student.count({
+      prisma.requester.count({
         where,
       }),
     ]);
 
     return res.status(200).json({
       status: "success",
-      results: students.length,
+      results: requesters.length,
       data: {
-        students,
+        requesters,
+        students: requesters,
         pagination: {
           page,
           limit,
-          totalStudents,
-          totalPages: Math.ceil(totalStudents / limit),
+          totalRequesters,
+          totalStudents: totalRequesters,
+          totalPages: Math.ceil(totalRequesters / limit),
         },
       },
     });
   } catch (error) {
-    console.error("List students error:", error);
+    console.error("List requesters error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while listing students",
+      message: "Something went wrong while listing requesters",
     });
   }
 };
 
-export const updateStudent = async (req: Request, res: Response) => {
+export const updateRequester = async (req: Request, res: Response) => {
   try {
-    const studentId = req.params.id;
+    const requesterId = req.params.id;
 
-    if (!studentId || Array.isArray(studentId)) {
+    if (!requesterId || Array.isArray(requesterId)) {
       return res.status(400).json({
         status: "fail",
-        message: "Valid student ID is required",
+        message: "Valid requester ID is required",
       });
     }
 
@@ -197,21 +199,21 @@ export const updateStudent = async (req: Request, res: Response) => {
 
     const { name, email, password, isActive } = req.body;
 
-    const existingStudent = await prisma.student.findFirst({
+    const existingRequester = await prisma.requester.findFirst({
       where: {
-        id: studentId,
+        id: requesterId,
         tenantId: req.session.tenantId,
       },
     });
 
-    if (!existingStudent) {
+    if (!existingRequester) {
       return res.status(404).json({
         status: "fail",
-        message: "Student not found",
+        message: "Requester not found",
       });
     }
 
-    const data: Prisma.StudentUpdateInput = {};
+    const data: Prisma.RequesterUpdateInput = {};
 
     if (typeof name === "string" && name.trim()) {
       data.name = name.trim();
@@ -229,8 +231,8 @@ export const updateStudent = async (req: Request, res: Response) => {
       data.password = await bcrypt.hash(password, 12);
     }
 
-    const student = await prisma.student.update({
-      where: { id: studentId },
+    const requester = await prisma.requester.update({
+      where: { id: requesterId },
       data,
       select: {
         id: true,
@@ -245,27 +247,27 @@ export const updateStudent = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Student updated successfully",
-      data: { student },
+      message: "Requester updated successfully",
+      data: { requester, student: requester },
     });
   } catch (error) {
-    console.error("Update student error:", error);
+    console.error("Update requester error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while updating student",
+      message: "Something went wrong while updating requester",
     });
   }
 };
 
-export const deactivateStudent = async (req: Request, res: Response) => {
+export const deactivateRequester = async (req: Request, res: Response) => {
   try {
-    const studentId = req.params.id;
+    const requesterId = req.params.id;
 
-    if (!studentId || Array.isArray(studentId)) {
+    if (!requesterId || Array.isArray(requesterId)) {
       return res.status(400).json({
         status: "fail",
-        message: "Valid student ID is required",
+        message: "Valid requester ID is required",
       });
     }
 
@@ -276,22 +278,22 @@ export const deactivateStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const existingStudent = await prisma.student.findFirst({
+    const existingRequester = await prisma.requester.findFirst({
       where: {
-        id: studentId,
+        id: requesterId,
         tenantId: req.session.tenantId,
       },
     });
 
-    if (!existingStudent) {
+    if (!existingRequester) {
       return res.status(404).json({
         status: "fail",
-        message: "Student not found",
+        message: "Requester not found",
       });
     }
 
-    const student = await prisma.student.update({
-      where: { id: studentId },
+    const requester = await prisma.requester.update({
+      where: { id: requesterId },
       data: {
         isActive: false,
       },
@@ -308,15 +310,15 @@ export const deactivateStudent = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Student deactivated successfully",
-      data: { student },
+      message: "Requester deactivated successfully",
+      data: { requester, student: requester },
     });
   } catch (error) {
-    console.error("Deactivate student error:", error);
+    console.error("Deactivate requester error:", error);
 
     return res.status(500).json({
       status: "error",
-      message: "Something went wrong while deactivating student",
+      message: "Something went wrong while deactivating requester",
     });
   }
 };

@@ -1,14 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 
-export const requireStudentAuth = (
+export const requireRequesterAuth = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  if (!req.session.studentId) {
+  if (!req.session.requesterId) {
     return res.status(401).json({
       status: "fail",
-      message: "Student authentication required",
+      message: "Requester authentication required",
     });
   }
 

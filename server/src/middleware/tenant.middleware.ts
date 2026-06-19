@@ -42,7 +42,7 @@ export const requireTenant = (
   next();
 };
 
-export const requireStudentTenant = (
+export const requireRequesterTenant = (
   req: Request,
   res: Response,
   next: NextFunction,

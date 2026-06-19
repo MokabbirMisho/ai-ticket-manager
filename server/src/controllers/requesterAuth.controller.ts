@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
 import { getOrCreateDefaultTenant } from "../middleware/tenant.middleware.js";
 
-export const registerStudent = async (req: Request, res: Response) => {
+export const registerRequester = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -14,21 +14,21 @@ export const registerStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const existingStudent = await prisma.student.findUnique({
+    const existingRequester = await prisma.requester.findUnique({
       where: { email },
     });
 
-    if (existingStudent) {
+    if (existingRequester) {
       return res.status(409).json({
         status: "fail",
-        message: "Student with this email already exists",
+        message: "Requester with this email already exists",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const tenant = await getOrCreateDefaultTenant();
 
-    const student = await prisma.student.create({
+    const requester = await prisma.requester.create({
       data: {
         name,
         email,
@@ -44,17 +44,17 @@ export const registerStudent = async (req: Request, res: Response) => {
       },
     });
 
-    req.session.studentId = student.id;
-    req.session.studentEmail = student.email;
+    req.session.requesterId = requester.id;
+    req.session.requesterEmail = requester.email;
     req.session.tenantId = tenant.id;
 
     return res.status(201).json({
       status: "success",
-      message: "Student registered successfully",
-      data: { student },
+      message: "Requester registered successfully",
+      data: { requester, student: requester },
     });
   } catch (error) {
-    console.error("Register student error:", error);
+    console.error("Register requester error:", error);
 
     return res.status(500).json({
       status: "error",
@@ -63,7 +63,7 @@ export const registerStudent = async (req: Request, res: Response) => {
   }
 };
 
-export const loginStudent = async (req: Request, res: Response) => {
+export const loginRequester = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -74,21 +74,21 @@ export const loginStudent = async (req: Request, res: Response) => {
       });
     }
 
-    const student = await prisma.student.findUnique({
+    const requester = await prisma.requester.findUnique({
       where: { email },
       include: {
         tenant: true,
       },
     });
 
-    if (!student || !student.isActive) {
+    if (!requester || !requester.isActive) {
       return res.status(401).json({
         status: "fail",
         message: "Invalid email or password",
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, student.password);
+    const isPasswordValid = await bcrypt.compare(password, requester.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -97,25 +97,28 @@ export const loginStudent = async (req: Request, res: Response) => {
       });
     }
 
-    req.session.studentId = student.id;
-    req.session.studentEmail = student.email;
-    req.session.tenantId = student.tenantId;
+    req.session.requesterId = requester.id;
+    req.session.requesterEmail = requester.email;
+    req.session.tenantId = requester.tenantId;
+
+    const requesterData = {
+      id: requester.id,
+      name: requester.name,
+      email: requester.email,
+      isActive: requester.isActive,
+      tenantId: requester.tenantId,
+    };
 
     return res.status(200).json({
       status: "success",
-      message: "Student login successful",
+      message: "Requester login successful",
       data: {
-        student: {
-          id: student.id,
-          name: student.name,
-          email: student.email,
-          isActive: student.isActive,
-          tenantId: student.tenantId,
-        },
+        requester: requesterData,
+        student: requesterData,
       },
     });
   } catch (error) {
-    console.error("Login student error:", error);
+    console.error("Login requester error:", error);
 
     return res.status(500).json({
       status: "error",
@@ -124,12 +127,12 @@ export const loginStudent = async (req: Request, res: Response) => {
   }
 };
 
-export const logoutStudent = async (req: Request, res: Response) => {
+export const logoutRequester = async (req: Request, res: Response) => {
   req.session.destroy((error) => {
     if (error) {
       return res.status(500).json({
         status: "error",
-        message: "Could not logout student",
+        message: "Could not logout requester",
       });
     }
 
@@ -137,22 +140,22 @@ export const logoutStudent = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Student logout successful",
+      message: "Requester logout successful",
     });
   });
 };
 
-export const getStudentMe = async (req: Request, res: Response) => {
+export const getRequesterMe = async (req: Request, res: Response) => {
   try {
-    if (!req.session.studentId) {
+    if (!req.session.requesterId) {
       return res.status(401).json({
         status: "fail",
-        message: "Student not authenticated",
+        message: "Requester not authenticated",
       });
     }
 
-    const student = await prisma.student.findUnique({
-      where: { id: req.session.studentId },
+    const requester = await prisma.requester.findUnique({
+      where: { id: req.session.requesterId },
       select: {
         id: true,
         name: true,
@@ -168,21 +171,21 @@ export const getStudentMe = async (req: Request, res: Response) => {
       },
     });
 
-    if (!student || !student.isActive) {
+    if (!requester || !requester.isActive) {
       return res.status(401).json({
         status: "fail",
-        message: "Student not found or inactive",
+        message: "Requester not found or inactive",
       });
     }
 
-    req.session.tenantId = student.tenantId;
+    req.session.tenantId = requester.tenantId;
 
     return res.status(200).json({
       status: "success",
-      data: { student },
+      data: { requester, student: requester },
     });
   } catch (error) {
-    console.error("Get student me error:", error);
+    console.error("Get requester me error:", error);
 
     return res.status(500).json({
       status: "error",

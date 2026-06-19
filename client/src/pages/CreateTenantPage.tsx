@@ -7,12 +7,23 @@ const plans = ["FREE", "BASIC", "PRO", "ENTERPRISE"];
 const statuses = ["TRIAL", "ACTIVE", "EXPIRED", "SUSPENDED"];
 const providers = ["MANUAL", "STRIPE", "SSLCOMMERZ", "BKASH"];
 
+const createSlugFromName = (value: string) => {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
 export function CreateTenantPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
   const [country, setCountry] = useState("");
   const [industry, setIndustry] = useState("");
@@ -26,6 +37,22 @@ export function CreateTenantPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+
+    if (!isSlugManuallyEdited || !slug) {
+      setSlug(createSlugFromName(value));
+      setIsSlugManuallyEdited(false);
+    }
+  };
+
+  const handleSlugChange = (value: string) => {
+    const nextSlug = createSlugFromName(value);
+
+    setSlug(nextSlug);
+    setIsSlugManuallyEdited(Boolean(nextSlug));
+  };
 
   if (user?.role !== "SUPER_ADMIN") {
     return <Navigate to="/dashboard" replace />;
@@ -106,8 +133,13 @@ export function CreateTenantPage() {
             Company Information
           </h2>
           <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <TextField label="Name" value={name} onChange={setName} />
-            <TextField label="Slug" value={slug} onChange={setSlug} />
+            <TextField label="Tenant Name" value={name} onChange={handleNameChange} />
+            <TextField
+              label="Slug"
+              value={slug}
+              onChange={handleSlugChange}
+              helperText="Auto-generated from tenant name. You can edit it if needed."
+            />
             <TextField label="Country" value={country} onChange={setCountry} />
             <TextField
               label="Industry"
@@ -208,11 +240,13 @@ function TextField({
   value,
   onChange,
   type = "text",
+  helperText,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  helperText?: string;
 }) {
   return (
     <div>
@@ -225,6 +259,9 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
       />
+      {helperText && (
+        <p className="mt-1 text-xs leading-5 text-slate-500">{helperText}</p>
+      )}
     </div>
   );
 }
