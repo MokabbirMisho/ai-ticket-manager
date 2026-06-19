@@ -25,7 +25,7 @@ export function SubscriptionBlockedPage() {
             Staff Login
           </Link>
           <Link
-            to="/student/login"
+            to="/requester/login"
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
           >
             Requester Login

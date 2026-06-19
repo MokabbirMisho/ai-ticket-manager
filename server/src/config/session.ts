@@ -13,7 +13,7 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is missing from .env");
 }
 
-console.log("Session store connected to:", databaseUrl);
+console.log("Session store database connection configured");
 
 const pgPool = new Pool({
   connectionString: databaseUrl,

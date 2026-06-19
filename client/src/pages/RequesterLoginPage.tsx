@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useStudentAuth } from "../context/StudentAuthContext";
+import { useRequesterAuth } from "../context/RequesterAuthContext";
 import {
   type DevLoginAccount,
   loadDevLoginAccounts,
@@ -10,9 +10,9 @@ import {
 
 const DEV_REQUESTER_LOGIN_STORAGE_KEY = "dev_requester_login_accounts";
 
-export function StudentLoginPage() {
+export function RequesterLoginPage() {
   const navigate = useNavigate();
-  const { login } = useStudentAuth();
+  const { login } = useRequesterAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +56,7 @@ export function StudentLoginPage() {
         });
       }
 
-      navigate("/student/dashboard");
+      navigate("/requester/dashboard");
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -191,7 +191,7 @@ export function StudentLoginPage() {
           <p className="mt-6 text-center text-sm text-slate-500">
             New requester?{" "}
             <Link
-              to="/student/register"
+              to="/requester/register"
               className="font-semibold text-slate-950 hover:underline"
             >
               Create account

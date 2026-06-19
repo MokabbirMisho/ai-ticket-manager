@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/axios";
 
-export function StudentCreateTicketPage() {
+export function RequesterCreateTicketPage() {
   const navigate = useNavigate();
 
   const [subject, setSubject] = useState("");
@@ -17,12 +17,12 @@ export function StudentCreateTicketPage() {
       setError("");
       setIsSubmitting(true);
 
-      await api.post("/student/tickets", {
+      await api.post("/requester/tickets", {
         subject,
         description,
       });
 
-      navigate("/student/tickets");
+      navigate("/requester/tickets");
     } catch {
       setError("Failed to create ticket");
     } finally {
@@ -54,7 +54,7 @@ export function StudentCreateTicketPage() {
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
-              placeholder="Example: Cannot access exam registration"
+              placeholder="Example: I cannot access my account dashboard"
             />
           </div>
 

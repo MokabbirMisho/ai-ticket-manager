@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createRequester,
   deactivateRequester,
+  getRequester,
   listRequesters,
   updateRequester,
 } from "../controllers/requester.controller.js";
@@ -19,6 +20,7 @@ router.use(requireTenant);
 router.use(requireActiveTenant);
 
 router.get("/", listRequesters);
+router.get("/:id", getRequester);
 router.post("/", createRequester);
 router.patch("/:id", updateRequester);
 router.delete("/:id", deactivateRequester);

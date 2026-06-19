@@ -34,7 +34,8 @@ type TenantUser = {
 
 type Usage = {
   users: number;
-  students: number;
+  requesters?: number;
+  students?: number;
   tickets: number;
   knowledgeArticles: number;
 };
@@ -222,7 +223,7 @@ export function TenantDetailPage() {
   const tenantUsers = tenant.users ?? [];
   const usageCounts = {
     users: usage?.users ?? 0,
-    students: usage?.students ?? 0,
+    requesters: usage?.requesters ?? usage?.students ?? 0,
     tickets: usage?.tickets ?? 0,
     knowledgeArticles: usage?.knowledgeArticles ?? 0,
   };
@@ -262,7 +263,7 @@ export function TenantDetailPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-4">
         <StatCard label="Users" value={usageCounts.users} />
-        <StatCard label="Requesters" value={usageCounts.students} />
+        <StatCard label="Requesters" value={usageCounts.requesters} />
         <StatCard label="Tickets" value={usageCounts.tickets} />
         <StatCard
           label="Knowledge"

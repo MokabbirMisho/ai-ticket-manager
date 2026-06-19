@@ -1,6 +1,6 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
-import { StudentLayout } from "./layouts/StudentLayout";
+import { RequesterLayout } from "./layouts/RequesterLayout";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CreateTenantPage } from "./pages/CreateTenantPage";
@@ -10,19 +10,21 @@ import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import { SuperLoginPage } from "./pages/SuperLoginPage";
 import { SuperSubscriptionsPage } from "./pages/SuperSubscriptionsPage";
 import { SubscriptionBlockedPage } from "./pages/SubscriptionBlockedPage";
-import { StudentCreateTicketPage } from "./pages/StudentCreateTicketPage";
-import { StudentDashboardPage } from "./pages/StudentDashboardPage";
-import { StudentLoginPage } from "./pages/StudentLoginPage";
-import { StudentsPage } from "./pages/StudentsPage";
-import { StudentTicketDetailPage } from "./pages/StudentTicketDetailPage";
-import { StudentTicketsPage } from "./pages/StudentTicketsPage";
+import { RequesterCreateTicketPage } from "./pages/RequesterCreateTicketPage";
+import { RequesterAccountPage } from "./pages/RequesterAccountPage";
+import { RequesterDashboardPage } from "./pages/RequesterDashboardPage";
+import { RequesterLoginPage } from "./pages/RequesterLoginPage";
+import { RequesterRegisterPage } from "./pages/RequesterRegisterPage";
+import { RequestersPage } from "./pages/RequestersPage";
+import { RequesterTicketDetailPage } from "./pages/RequesterTicketDetailPage";
+import { RequesterTicketsPage } from "./pages/RequesterTicketsPage";
 import { TenantDetailPage } from "./pages/TenantDetailPage";
 import { TenantListPage } from "./pages/TenantListPage";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
+import { RequesterProtectedRoute } from "./routes/RequesterProtectedRoute";
 import { KnowledgePage } from "./pages/KnowledgePage";
 
 function App() {
@@ -38,8 +40,16 @@ function App() {
       <Route path="/super/login" element={<SuperLoginPage />} />
 
       {/* Requester Login */}
-      <Route path="/requester/login" element={<StudentLoginPage />} />
-      <Route path="/student/login" element={<StudentLoginPage />} />
+      <Route path="/requester/login" element={<RequesterLoginPage />} />
+      <Route path="/requester/register" element={<RequesterRegisterPage />} />
+      <Route
+        path="/student/login"
+        element={<Navigate to="/requester/login" replace />}
+      />
+      <Route
+        path="/student/register"
+        element={<Navigate to="/requester/register" replace />}
+      />
       <Route
         path="/subscription-blocked"
         element={<SubscriptionBlockedPage />}
@@ -57,22 +67,42 @@ function App() {
       {/* Requester Portal */}
       <Route
         element={
-          <StudentProtectedRoute>
-            <StudentLayout />
-          </StudentProtectedRoute>
+          <RequesterProtectedRoute>
+            <RequesterLayout />
+          </RequesterProtectedRoute>
         }
       >
-        <Route path="/student/dashboard" element={<StudentDashboardPage />} />
-        <Route path="/student/tickets" element={<StudentTicketsPage />} />
         <Route
-          path="/student/tickets/new"
-          element={<StudentCreateTicketPage />}
+          path="/requester/dashboard"
+          element={<RequesterDashboardPage />}
+        />
+        <Route path="/requester/tickets" element={<RequesterTicketsPage />} />
+        <Route
+          path="/requester/tickets/new"
+          element={<RequesterCreateTicketPage />}
         />
         <Route
-          path="/student/tickets/:id"
-          element={<StudentTicketDetailPage />}
+          path="/requester/tickets/:id"
+          element={<RequesterTicketDetailPage />}
         />
+        <Route path="/requester/account" element={<RequesterAccountPage />} />
       </Route>
+      <Route
+        path="/student/dashboard"
+        element={<Navigate to="/requester/dashboard" replace />}
+      />
+      <Route
+        path="/student/tickets"
+        element={<Navigate to="/requester/tickets" replace />}
+      />
+      <Route
+        path="/student/tickets/new"
+        element={<Navigate to="/requester/tickets/new" replace />}
+      />
+      <Route
+        path="/student/tickets/:id"
+        element={<LegacyRequesterTicketRedirect />}
+      />
 
       {/* Admin / Agent Portal */}
       <Route
@@ -86,7 +116,11 @@ function App() {
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/users" element={<UsersPage />} />
-        <Route path="/students" element={<StudentsPage />} />
+        <Route path="/requesters" element={<RequestersPage />} />
+        <Route
+          path="/students"
+          element={<Navigate to="/requesters" replace />}
+        />
         <Route path="/knowledge" element={<KnowledgePage />} />
         <Route path="/super/dashboard" element={<SuperAdminDashboard />} />
         <Route path="/super/tenants" element={<TenantListPage />} />
@@ -102,3 +136,9 @@ function App() {
 }
 
 export default App;
+
+function LegacyRequesterTicketRedirect() {
+  const { id } = useParams();
+
+  return <Navigate to={`/requester/tickets/${id ?? ""}`} replace />;
+}

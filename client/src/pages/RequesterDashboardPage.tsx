@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { useStudentAuth } from "../context/StudentAuthContext";
+import { useRequesterAuth } from "../context/RequesterAuthContext";
 
-export function StudentDashboardPage() {
-  const { student } = useStudentAuth();
+export function RequesterDashboardPage() {
+  const { requester } = useRequesterAuth();
 
   return (
     <div>
       <div>
         <h1 className="text-2xl font-bold text-slate-900">
-          Welcome, {student?.name}
+          Welcome, {requester?.name}
         </h1>
         <p className="mt-2 text-slate-500">
           Submit support tickets and track your requests from one place.
@@ -20,7 +20,7 @@ export function StudentDashboardPage() {
           <p className="text-sm text-slate-500">My Tickets</p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">View</h2>
           <Link
-            to="/student/tickets"
+            to="/requester/tickets"
             className="mt-4 inline-block text-sm font-medium text-slate-900 hover:underline"
           >
             Go to tickets →
@@ -31,7 +31,7 @@ export function StudentDashboardPage() {
           <p className="text-sm text-slate-500">Need Help?</p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">Create</h2>
           <Link
-            to="/student/tickets/new"
+            to="/requester/tickets/new"
             className="mt-4 inline-block text-sm font-medium text-slate-900 hover:underline"
           >
             Submit new ticket →

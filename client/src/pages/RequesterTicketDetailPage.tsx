@@ -19,7 +19,7 @@ type Ticket = {
   } | null;
 };
 
-export function StudentTicketDetailPage() {
+export function RequesterTicketDetailPage() {
   const { id } = useParams();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -31,7 +31,7 @@ export function StudentTicketDetailPage() {
       setIsLoading(true);
       setError("");
 
-      const response = await api.get(`/student/tickets/${id}`);
+      const response = await api.get(`/requester/tickets/${id}`);
       setTicket(response.data.data.ticket);
     } catch {
       setError("Failed to load ticket");
@@ -59,7 +59,7 @@ export function StudentTicketDetailPage() {
   return (
     <div>
       <Link
-        to="/student/tickets"
+        to="/requester/tickets"
         className="text-sm font-medium text-slate-600 hover:text-slate-900"
       >
         ← Back to my tickets

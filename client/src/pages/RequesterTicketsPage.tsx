@@ -13,7 +13,7 @@ type Ticket = {
   updatedAt: string;
 };
 
-export function StudentTicketsPage() {
+export function RequesterTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,7 +23,7 @@ export function StudentTicketsPage() {
       setIsLoading(true);
       setError("");
 
-      const response = await api.get("/student/tickets");
+      const response = await api.get("/requester/tickets");
       setTickets(response.data.data.tickets);
     } catch {
       setError("Failed to load your tickets");
@@ -47,7 +47,7 @@ export function StudentTicketsPage() {
         </div>
 
         <Link
-          to="/student/tickets/new"
+          to="/requester/tickets/new"
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
           New Ticket
@@ -73,7 +73,7 @@ export function StudentTicketsPage() {
               <Link
                 key={ticket.id}
                 data-testid="ticket-row"
-                to={`/student/tickets/${ticket.id}`}
+                to={`/requester/tickets/${ticket.id}`}
                 className="block p-5 hover:bg-slate-50"
               >
                 <div className="flex items-start justify-between gap-4">

@@ -1,12 +1,45 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { Role, type Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+
+type StaffRole = "ADMIN" | "AGENT";
+
+const getTrimmedString = (value: unknown) => {
+  return typeof value === "string" ? value.trim() : "";
+};
+
+const isValidStaffRole = (role: unknown): role is StaffRole => {
+  return role === "ADMIN" || role === "AGENT";
+};
+
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  role: true,
+  department: true,
+  jobTitle: true,
+  tenantId: true,
+  isActive: true,
+  mustChangePassword: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
 
 export const createAgent = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, role, department, jobTitle, isActive } =
+      req.body;
     const tenantId = req.session.tenantId;
+
+    const normalizedName = getTrimmedString(name);
+    const normalizedEmail = getTrimmedString(email).toLowerCase();
+    const normalizedPassword = getTrimmedString(password);
+    const normalizedPhone = getTrimmedString(phone);
+    const normalizedDepartment = getTrimmedString(department);
+    const normalizedJobTitle = getTrimmedString(jobTitle);
 
     if (!tenantId) {
       return res.status(403).json({
@@ -15,15 +48,25 @@ export const createAgent = async (req: Request, res: Response) => {
       });
     }
 
-    if (!name || !email || !password) {
+    if (
+      !normalizedName ||
+      !normalizedEmail ||
+      !normalizedPassword ||
+      !normalizedPhone ||
+      !isValidStaffRole(role) ||
+      !normalizedDepartment ||
+      !normalizedJobTitle ||
+      typeof isActive !== "boolean"
+    ) {
       return res.status(400).json({
         status: "fail",
-        message: "Name, email, and password are required",
+        message:
+          "Full name, email, temporary password, phone, role, department, job title, and status are required",
       });
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -33,25 +76,22 @@ export const createAgent = async (req: Request, res: Response) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(normalizedPassword, 12);
 
     const agent = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: normalizedName,
+        email: normalizedEmail,
         password: hashedPassword,
-        role: Role.AGENT,
+        phone: normalizedPhone,
+        role,
+        department: normalizedDepartment,
+        jobTitle: normalizedJobTitle,
+        isActive,
+        mustChangePassword: true,
         tenantId,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        tenantId: true,
-        isActive: true,
-        createdAt: true,
-      },
+      select: userSelect,
     });
 
     return res.status(201).json({
@@ -128,14 +168,7 @@ export const listUsers = async (req: Request, res: Response) => {
           createdAt: "desc",
         },
         select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          tenantId: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
+          ...userSelect,
         },
       }),
 
@@ -184,7 +217,8 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
 
-    const { name, email, password, role, isActive } = req.body;
+    const { name, email, password, phone, role, department, jobTitle, isActive } =
+      req.body;
 
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -202,18 +236,68 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
 
+    if (existingUser.role === "SUPER_ADMIN") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Super Admin users cannot be managed from this endpoint",
+      });
+    }
+
     const data: {
       name?: string;
       email?: string;
       password?: string;
-      role?: "SUPER_ADMIN" | "ADMIN" | "AGENT";
+      role?: "ADMIN" | "AGENT";
       isActive?: boolean;
+      phone?: string | null;
+      department?: string | null;
+      jobTitle?: string | null;
+      mustChangePassword?: boolean;
     } = {};
 
-    if (name) data.name = name;
-    if (email) data.email = email;
+    const normalizedName = getTrimmedString(name);
+    const normalizedEmail = getTrimmedString(email).toLowerCase();
+    const normalizedPhone = getTrimmedString(phone);
+    const normalizedDepartment = getTrimmedString(department);
+    const normalizedJobTitle = getTrimmedString(jobTitle);
+    const normalizedPassword = getTrimmedString(password);
 
-    if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "AGENT") {
+    if (
+      !normalizedName ||
+      !normalizedEmail ||
+      !normalizedPhone ||
+      !isValidStaffRole(role) ||
+      !normalizedDepartment ||
+      !normalizedJobTitle ||
+      typeof isActive !== "boolean"
+    ) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Full name, email, phone, role, department, job title, and status are required",
+      });
+    }
+
+    if (normalizedEmail !== existingUser.email) {
+      const userWithEmail = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (userWithEmail) {
+        return res.status(409).json({
+          status: "fail",
+          message: "User with this email already exists",
+        });
+      }
+    }
+
+    data.name = normalizedName;
+    data.email = normalizedEmail;
+    data.phone = normalizedPhone;
+    data.department = normalizedDepartment;
+    data.jobTitle = normalizedJobTitle;
+
+    if (role === "ADMIN" || role === "AGENT") {
       data.role = role;
     }
 
@@ -221,23 +305,15 @@ export const updateUser = async (req: Request, res: Response) => {
       data.isActive = isActive;
     }
 
-    if (password) {
-      data.password = await bcrypt.hash(password, 12);
+    if (normalizedPassword) {
+      data.password = await bcrypt.hash(normalizedPassword, 12);
+      data.mustChangePassword = true;
     }
 
     const user = await prisma.user.update({
       where: { id: userId },
       data,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        tenantId: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userSelect,
     });
 
     return res.status(200).json({
@@ -302,13 +378,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
         isActive: false,
       },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        tenantId: true,
-        isActive: true,
-        updatedAt: true,
+        ...userSelect,
       },
     });
 

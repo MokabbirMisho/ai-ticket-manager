@@ -19,7 +19,7 @@ type Ticket = {
   aiSummary: string | null;
   aiReply: string | null;
   assignedAgentId: string | null;
-  studentId?: string | null;
+  requesterId?: string | null;
   createdAt: string;
   updatedAt: string;
   assignedAgent: {
@@ -27,6 +27,11 @@ type Ticket = {
     name: string;
     email: string;
     role: string;
+  } | null;
+  requester?: {
+    id: string;
+    name: string;
+    email: string;
   } | null;
   student?: {
     id: string;
@@ -191,7 +196,9 @@ export function TicketsPage() {
                   </td>
 
                   <td className="px-5 py-4 text-slate-600">
-                    {ticket.student?.name || "Manual Ticket"}
+                    {ticket.requester?.name ??
+                      ticket.student?.name ??
+                      "Manual Ticket"}
                   </td>
 
                   <td className="px-5 py-4 text-slate-600">

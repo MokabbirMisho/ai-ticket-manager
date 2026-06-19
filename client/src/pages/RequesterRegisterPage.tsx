@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useStudentAuth } from "../context/StudentAuthContext";
+import { useRequesterAuth } from "../context/RequesterAuthContext";
 
-export function StudentRegisterPage() {
+export function RequesterRegisterPage() {
   const navigate = useNavigate();
-  const { register } = useStudentAuth();
+  const { register } = useRequesterAuth();
 
-  const [name, setName] = useState("Rahman Requester");
-  const [email, setEmail] = useState("requester@example.com");
-  const [password, setPassword] = useState("requester123");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,9 +20,21 @@ export function StudentRegisterPage() {
       setIsSubmitting(true);
 
       await register(name, email, password);
-      navigate("/student/dashboard");
-    } catch {
-      setError("Could not create requester account");
+      navigate("/requester/dashboard");
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error
+      ) {
+        const apiError = error as { response?: { data?: { message?: string } } };
+        setError(
+          apiError.response?.data?.message ||
+            "Could not create requester account",
+        );
+      } else {
+        setError("Could not create requester account");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -47,37 +59,52 @@ export function StudentRegisterPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="requester-name"
+              className="mb-1 block text-sm font-medium text-slate-700"
+            >
               Name
             </label>
             <input
+              id="requester-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
+              placeholder="Enter your name"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="requester-email"
+              className="mb-1 block text-sm font-medium text-slate-700"
+            >
               Email
             </label>
             <input
+              id="requester-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
+              placeholder="Enter your email"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="requester-password"
+              className="mb-1 block text-sm font-medium text-slate-700"
+            >
               Password
             </label>
             <input
+              id="requester-password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-4 py-2 outline-none focus:border-slate-900"
+              placeholder="Create a password"
             />
           </div>
 
@@ -92,7 +119,7 @@ export function StudentRegisterPage() {
         <p className="mt-5 text-center text-sm text-slate-500">
           Already have an account?{" "}
           <Link
-            to="/student/login"
+            to="/requester/login"
             className="font-medium text-slate-900 hover:underline"
           >
             Login

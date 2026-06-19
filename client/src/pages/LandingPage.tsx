@@ -37,7 +37,7 @@ export function LandingPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            to="/student/login"
+            to="/requester/login"
             className="hidden rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 sm:inline-block"
           >
             Requester Login
@@ -194,7 +194,7 @@ export function LandingPage() {
 
             <div className="flex flex-wrap gap-4 md:justify-end">
               <Link
-                to="/student/login"
+                to="/requester/login"
                 className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900"
               >
                 Requester Login

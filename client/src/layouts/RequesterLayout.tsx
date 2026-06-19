@@ -1,14 +1,14 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { useStudentAuth } from "../context/StudentAuthContext";
+import { useRequesterAuth } from "../context/RequesterAuthContext";
 
-export function StudentLayout() {
-  const { student, logout } = useStudentAuth();
+export function RequesterLayout() {
+  const { requester, logout } = useRequesterAuth();
 
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="border-b border-slate-200 bg-white px-8 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link to="/student/dashboard">
+          <Link to="/requester/dashboard">
             <h1 className="text-lg font-bold text-slate-900">
               Requester Portal
             </h1>
@@ -17,7 +17,7 @@ export function StudentLayout() {
 
           <nav className="flex items-center gap-4">
             <NavLink
-              to="/student/dashboard"
+              to="/requester/dashboard"
               className={({ isActive }) =>
                 isActive
                   ? "text-sm font-semibold text-slate-900"
@@ -28,7 +28,7 @@ export function StudentLayout() {
             </NavLink>
 
             <NavLink
-              to="/student/tickets"
+              to="/requester/tickets"
               className={({ isActive }) =>
                 isActive
                   ? "text-sm font-semibold text-slate-900"
@@ -38,8 +38,19 @@ export function StudentLayout() {
               My Tickets
             </NavLink>
 
+            <NavLink
+              to="/requester/account"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-sm font-semibold text-slate-900"
+                  : "text-sm font-medium text-slate-500 hover:text-slate-900"
+              }
+            >
+              Account
+            </NavLink>
+
             <Link
-              to="/student/tickets/new"
+              to="/requester/tickets/new"
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
             >
               New Ticket
@@ -59,7 +70,7 @@ export function StudentLayout() {
         <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">Logged in as</p>
           <h2 className="font-semibold text-slate-900">
-            {student?.name} · {student?.email}
+            {requester?.name} · {requester?.email}
           </h2>
         </div>
 

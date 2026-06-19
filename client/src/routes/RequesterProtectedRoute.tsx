@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useStudentAuth } from "../context/StudentAuthContext";
+import { useRequesterAuth } from "../context/RequesterAuthContext";
 
-export function StudentProtectedRoute({ children }: { children: ReactNode }) {
-  const { student, isLoading } = useStudentAuth();
+export function RequesterProtectedRoute({ children }: { children: ReactNode }) {
+  const { requester, isLoading } = useRequesterAuth();
 
   if (isLoading) {
     return (
@@ -13,8 +13,8 @@ export function StudentProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!student) {
-    return <Navigate to="/student/login" replace />;
+  if (!requester) {
+    return <Navigate to="/requester/login" replace />;
   }
 
   return children;

@@ -14,7 +14,8 @@ type Tenant = {
   isActive: boolean;
   _count: {
     users: number;
-    students: number;
+    requesters?: number;
+    students?: number;
     tickets: number;
     knowledgeArticles: number;
   };

@@ -9,7 +9,7 @@ test("landing page loads", async ({ page }) => {
     }),
   ).toBeVisible();
 
-  await expect(page.locator('a[href="/student/login"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/requester/login"]').first()).toBeVisible();
 
   await expect(page.locator('a[href="/admin/login"]').first()).toBeVisible();
 });
