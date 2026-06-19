@@ -9,17 +9,18 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       role: "AGENT",
       isActive: true,
     };
+    const tenantId = req.session.tenantId;
 
     if (req.session.role !== "SUPER_ADMIN") {
-      if (!req.session.tenantId) {
+      if (!tenantId) {
         return res.status(403).json({
           status: "fail",
           message: "Tenant context required",
         });
       }
 
-      ticketWhere.tenantId = req.session.tenantId;
-      agentWhere.tenantId = req.session.tenantId;
+      ticketWhere.tenantId = tenantId;
+      agentWhere.tenantId = tenantId;
     }
 
     const [
@@ -73,6 +74,11 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }),
     ]);
 
+    const onboarding =
+      req.session.role === "ADMIN" && tenantId
+        ? await getTenantAdminOnboarding(tenantId)
+        : null;
+
     return res.status(200).json({
       status: "success",
       data: {
@@ -89,6 +95,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           refundRequests,
         },
         recentTickets,
+        onboarding,
       },
     });
   } catch (error) {
@@ -99,4 +106,61 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       message: "Something went wrong while loading dashboard stats",
     });
   }
+};
+
+const hasText = (value: string | null) => Boolean(value?.trim());
+
+const getTenantAdminOnboarding = async (tenantId: string) => {
+  const [
+    tenant,
+    agentCount,
+    requesterCount,
+    knowledgeArticleCount,
+    ticketCount,
+  ] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        name: true,
+        contactEmail: true,
+        country: true,
+        industry: true,
+      },
+    }),
+    prisma.user.count({
+      where: {
+        tenantId,
+        role: "AGENT",
+      },
+    }),
+    prisma.requester.count({
+      where: {
+        tenantId,
+      },
+    }),
+    prisma.knowledgeArticle.count({
+      where: {
+        tenantId,
+      },
+    }),
+    prisma.ticket.count({
+      where: {
+        tenantId,
+      },
+    }),
+  ]);
+
+  return {
+    completeCompanyProfile: Boolean(
+      tenant &&
+        hasText(tenant.name) &&
+        hasText(tenant.contactEmail) &&
+        hasText(tenant.country) &&
+        hasText(tenant.industry),
+    ),
+    hasFirstAgent: agentCount > 0,
+    hasFirstRequester: requesterCount > 0,
+    hasFirstKnowledgeArticle: knowledgeArticleCount > 0,
+    hasFirstTicket: ticketCount > 0,
+  };
 };
