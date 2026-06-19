@@ -51,13 +51,6 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    if (user.tenant && !user.tenant.isActive) {
-      return res.status(403).json({
-        status: "fail",
-        message: "Workspace is inactive",
-      });
-    }
-
     req.session.userId = user.id;
     req.session.role = user.role;
     if (user.tenantId) {
@@ -135,7 +128,7 @@ export const getMe = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user || !user.isActive || (user.tenant && !user.tenant.isActive)) {
+    if (!user || !user.isActive) {
       return res.status(401).json({
         status: "fail",
         message: "User not found or inactive",

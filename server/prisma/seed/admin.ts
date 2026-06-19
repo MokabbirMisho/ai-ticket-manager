@@ -1,6 +1,12 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import { PrismaClient, Role } from "@prisma/client";
+import {
+  PaymentProvider,
+  Plan,
+  PrismaClient,
+  Role,
+  SubscriptionStatus,
+} from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
@@ -31,7 +37,13 @@ async function main() {
     where: {
       slug: "default",
     },
-    update: {},
+    update: {
+      isActive: true,
+      plan: Plan.FREE,
+      subscriptionStatus: SubscriptionStatus.TRIAL,
+      subscriptionEndsAt: null,
+      paymentProvider: PaymentProvider.MANUAL,
+    },
     create: {
       name: "Default Workspace",
       slug: "default",

@@ -9,6 +9,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import { SuperLoginPage } from "./pages/SuperLoginPage";
 import { SuperSubscriptionsPage } from "./pages/SuperSubscriptionsPage";
+import { SubscriptionBlockedPage } from "./pages/SubscriptionBlockedPage";
 import { StudentCreateTicketPage } from "./pages/StudentCreateTicketPage";
 import { StudentDashboardPage } from "./pages/StudentDashboardPage";
 import { StudentLoginPage } from "./pages/StudentLoginPage";
@@ -30,13 +31,19 @@ function App() {
       <Route path="/" element={<LandingPage />} />
 
       {/* Staff Login */}
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/admin/login" element={<LoginPage />} />
 
       {/* Super Admin Login */}
       <Route path="/super/login" element={<SuperLoginPage />} />
 
       {/* Requester Login */}
+      <Route path="/requester/login" element={<StudentLoginPage />} />
       <Route path="/student/login" element={<StudentLoginPage />} />
+      <Route
+        path="/subscription-blocked"
+        element={<SubscriptionBlockedPage />}
+      />
 
       <Route
         path="/change-password"

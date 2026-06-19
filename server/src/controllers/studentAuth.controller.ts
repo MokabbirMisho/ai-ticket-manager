@@ -97,13 +97,6 @@ export const loginStudent = async (req: Request, res: Response) => {
       });
     }
 
-    if (!student.tenant.isActive) {
-      return res.status(403).json({
-        status: "fail",
-        message: "Workspace is inactive",
-      });
-    }
-
     req.session.studentId = student.id;
     req.session.studentEmail = student.email;
     req.session.tenantId = student.tenantId;
@@ -175,7 +168,7 @@ export const getStudentMe = async (req: Request, res: Response) => {
       },
     });
 
-    if (!student || !student.isActive || !student.tenant.isActive) {
+    if (!student || !student.isActive) {
       return res.status(401).json({
         status: "fail",
         message: "Student not found or inactive",

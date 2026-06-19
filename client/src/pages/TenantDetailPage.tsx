@@ -19,7 +19,7 @@ type Tenant = {
   subscriptionStatus: string;
   subscriptionEndsAt: string | null;
   paymentProvider: string;
-  users: TenantUser[];
+  users?: TenantUser[];
 };
 
 type TenantUser = {
@@ -79,19 +79,23 @@ export function TenantDetailPage() {
     setPaymentProvider(nextTenant.paymentProvider);
   };
 
-  const fetchTenant = async () => {
+  const fetchTenant = async (showLoading = true) => {
     if (!id) return;
 
     try {
-      setIsLoading(true);
+      if (showLoading) {
+        setIsLoading(true);
+      }
       setError("");
       const response = await api.get(`/super/tenants/${id}`);
       setFormState(response.data.data.tenant);
-      setUsage(response.data.data.usage);
+      setUsage(response.data.data.usage ?? null);
     } catch {
       setError("Failed to load tenant");
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -111,14 +115,14 @@ export function TenantDetailPage() {
       setIsSaving(true);
       setError("");
       setSuccess("");
-      const response = await api.patch(`/super/tenants/${id}`, {
+      await api.patch(`/super/tenants/${id}`, {
         name,
         slug,
         contactEmail,
         country,
         industry,
       });
-      setFormState(response.data.data.tenant);
+      await fetchTenant(false);
       setSuccess("Tenant info updated");
     } catch {
       setError("Failed to update tenant info");
@@ -172,13 +176,13 @@ export function TenantDetailPage() {
       setIsSaving(true);
       setError("");
       setSuccess("");
-      const response = await api.patch(`/super/tenants/${id}/subscription`, {
+      await api.patch(`/super/tenants/${id}/subscription`, {
         plan,
         subscriptionStatus,
         subscriptionEndsAt: subscriptionEndsAt || null,
         paymentProvider,
       });
-      setFormState(response.data.data.tenant);
+      await fetchTenant(false);
       setSuccess("Subscription updated");
     } catch {
       setError("Failed to update subscription");
@@ -195,8 +199,8 @@ export function TenantDetailPage() {
       setError("");
       setSuccess("");
       const action = tenant.isActive ? "deactivate" : "activate";
-      const response = await api.patch(`/super/tenants/${id}/${action}`);
-      setFormState(response.data.data.tenant);
+      await api.patch(`/super/tenants/${id}/${action}`);
+      await fetchTenant(false);
       setSuccess(tenant.isActive ? "Tenant deactivated" : "Tenant activated");
     } catch {
       setError("Failed to update tenant status");
@@ -214,6 +218,14 @@ export function TenantDetailPage() {
       <div className="text-sm text-red-600">{error || "Tenant not found"}</div>
     );
   }
+
+  const tenantUsers = tenant.users ?? [];
+  const usageCounts = {
+    users: usage?.users ?? 0,
+    students: usage?.students ?? 0,
+    tickets: usage?.tickets ?? 0,
+    knowledgeArticles: usage?.knowledgeArticles ?? 0,
+  };
 
   return (
     <div>
@@ -249,12 +261,12 @@ export function TenantDetailPage() {
       )}
 
       <div className="mt-6 grid gap-6 md:grid-cols-4">
-        <StatCard label="Users" value={usage?.users ?? 0} />
-        <StatCard label="Requesters" value={usage?.students ?? 0} />
-        <StatCard label="Tickets" value={usage?.tickets ?? 0} />
+        <StatCard label="Users" value={usageCounts.users} />
+        <StatCard label="Requesters" value={usageCounts.students} />
+        <StatCard label="Tickets" value={usageCounts.tickets} />
         <StatCard
           label="Knowledge"
-          value={usage?.knowledgeArticles ?? 0}
+          value={usageCounts.knowledgeArticles}
         />
       </div>
 
@@ -363,14 +375,14 @@ export function TenantDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {tenant.users.length === 0 && (
+              {tenantUsers.length === 0 && (
                 <tr>
                   <td className="px-5 py-4 text-slate-500" colSpan={6}>
                     No tenant users found.
                   </td>
                 </tr>
               )}
-              {tenant.users.map((tenantUser) => (
+              {tenantUsers.map((tenantUser) => (
                 <tr key={tenantUser.id} className="hover:bg-slate-50">
                   <td className="px-5 py-4 font-medium text-slate-900">
                     {tenantUser.name}
