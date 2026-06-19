@@ -4,9 +4,15 @@ node_modules
 # environment variables
 .env
 .env.*
-.env
+.env.local
+.env.production
+.env.development
 server/.env
 client/.env
+!.env.example
+!server/.env.example
+!client/.env.example
+*.sql
 
 # build
 dist

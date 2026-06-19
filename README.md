@@ -178,6 +178,37 @@ PostgreSQL stores:
 ### Development Tools
 
 - Git
+
+---
+
+## Supabase PostgreSQL with Prisma
+
+For Supabase, keep real credentials only in your local `server/.env` file.
+Never commit `.env` files or exported SQL dumps.
+
+Use the Supabase transaction-mode pooler URL for `DATABASE_URL`:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:6543/postgres?pgbouncer=true"
+```
+
+Use the Supabase session-mode pooler URL for `DIRECT_URL`, which Prisma uses
+for migrations and schema changes:
+
+```env
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/postgres"
+```
+
+After `server/.env` is ready, run these from the `server` directory:
+
+```bash
+npx prisma generate
+npx prisma db push
+npm run seed:admin
+```
+
+Do not run `npx prisma db push` until the Supabase URLs in `server/.env` are
+confirmed.
 - GitHub
 - VS Code
 - Docker (Planned)

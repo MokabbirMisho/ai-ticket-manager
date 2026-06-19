@@ -18,7 +18,7 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is missing from .env");
 }
 
-console.log("Using database:", databaseUrl);
+console.log("Using configured database connection");
 
 const pool = new Pool({
   connectionString: databaseUrl,
@@ -29,6 +29,9 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({
   adapter,
 });
+
+const SUPER_ADMIN_EMAIL = "mokabbirmiso1992@gmail.com";
+const OLD_SEED_ADMIN_EMAIL = ["admin", "example.com"].join("@");
 
 async function main() {
   const hashedPassword = await bcrypt.hash("admin123", 12);
@@ -82,22 +85,56 @@ async function main() {
     WHERE "tenantId" IS NULL
   `;
 
-  const admin = await prisma.user.upsert({
+  const superAdmin = await prisma.user.upsert({
     where: {
-      email: "admin@example.com",
+      email: SUPER_ADMIN_EMAIL,
     },
-    update: {},
-    create: {
-      name: "System Admin",
-      email: "admin@example.com",
+    update: {
+      name: "Super Admin",
       password: hashedPassword,
-      role: Role.ADMIN,
+      role: Role.SUPER_ADMIN,
       isActive: true,
-      tenantId: tenant.id,
+      tenantId: null,
+    },
+    create: {
+      name: "Super Admin",
+      email: SUPER_ADMIN_EMAIL,
+      password: hashedPassword,
+      role: Role.SUPER_ADMIN,
+      isActive: true,
+      tenantId: null,
     },
   });
 
-  console.log("Admin user ready:", admin.email);
+  const oldSeedAdmin = await prisma.user.findUnique({
+    where: {
+      email: OLD_SEED_ADMIN_EMAIL,
+    },
+    select: {
+      id: true,
+      role: true,
+      _count: {
+        select: {
+          assignedTickets: true,
+        },
+      },
+    },
+  });
+
+  if (
+    oldSeedAdmin &&
+    (oldSeedAdmin.role === Role.ADMIN ||
+      oldSeedAdmin.role === Role.SUPER_ADMIN) &&
+    oldSeedAdmin._count.assignedTickets === 0
+  ) {
+    await prisma.user.delete({
+      where: {
+        id: oldSeedAdmin.id,
+      },
+    });
+  }
+
+  console.log("Super admin user ready:", superAdmin.email);
 }
 
 main()
