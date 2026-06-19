@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type Requester = {
@@ -180,7 +181,9 @@ export function RequestersPage() {
         email: createForm.email.trim(),
       });
 
-      setSuccess("Requester created successfully");
+      setSuccess(
+        "Requester created successfully. They can now log in from the Requester Login page.",
+      );
       setCreateForm(emptyForm);
       await fetchRequesters(1);
     } catch {
@@ -239,7 +242,7 @@ export function RequestersPage() {
 
       await api.patch(`/requesters/${selectedRequester.id}`, payload);
 
-      setSuccess("Requester updated successfully");
+      setSuccess("Requester profile updated successfully.");
       closeEditModal();
       await fetchRequesters(pagination.page);
     } catch {
@@ -284,7 +287,10 @@ export function RequestersPage() {
         </p>
       </div>
 
-      <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+      <section
+        id="create-requester"
+        className="mt-6 rounded-2xl bg-white p-6 shadow-sm"
+      >
         <h2 className="text-lg font-bold text-slate-900">Create Requester</h2>
 
         <form onSubmit={handleCreateRequester} className="mt-5 space-y-6">
@@ -429,7 +435,16 @@ export function RequestersPage() {
         )}
 
         {!isLoading && requesters.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">No requesters found.</div>
+          <EmptyState
+            title="No requesters yet"
+            message="Create your first requester so they can log in and submit support tickets."
+            actionLabel="Create Requester"
+            onAction={() =>
+              document
+                .getElementById("create-requester")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
         )}
 
         {!isLoading && requesters.length > 0 && (

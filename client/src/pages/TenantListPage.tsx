@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type Tenant = {
@@ -97,7 +98,12 @@ export function TenantListPage() {
         {error && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!isLoading && !error && tenants.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">No tenants found.</div>
+          <EmptyState
+            title="No tenants yet"
+            message="Create your first tenant workspace to start onboarding clients."
+            actionLabel="Create Tenant"
+            actionTo="/super/tenants/new"
+          />
         )}
 
         {!isLoading && !error && tenants.length > 0 && (

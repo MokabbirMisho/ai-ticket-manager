@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type KnowledgeArticle = {
@@ -100,7 +101,9 @@ export function KnowledgePage() {
         category,
       });
 
-      setSuccess("Knowledge article created successfully");
+      setSuccess(
+        "Knowledge article added successfully. AI can now use it for better support suggestions.",
+      );
       resetCreateForm();
       await fetchArticles(1);
     } catch {
@@ -140,7 +143,7 @@ export function KnowledgePage() {
         isActive: editIsActive,
       });
 
-      setSuccess("Knowledge article updated successfully");
+      setSuccess("Knowledge article updated successfully.");
       cancelEdit();
       await fetchArticles(pagination.page);
     } catch {
@@ -185,7 +188,10 @@ export function KnowledgePage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1">
+        <section
+          id="create-knowledge-article"
+          className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1"
+        >
           <h2 className="text-lg font-bold text-slate-900">Create Article</h2>
 
           <form onSubmit={handleCreateArticle} className="mt-5 space-y-4">
@@ -275,9 +281,16 @@ export function KnowledgePage() {
           )}
 
           {!isLoading && articles.length === 0 && (
-            <div className="p-6 text-sm text-slate-500">
-              No knowledge articles found.
-            </div>
+            <EmptyState
+              title="No knowledge articles yet"
+              message="Add support knowledge so AI can suggest better replies and summaries."
+              actionLabel="Add Knowledge Article"
+              onAction={() =>
+                document
+                  .getElementById("create-knowledge-article")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
           )}
 
           {!isLoading && articles.length > 0 && (

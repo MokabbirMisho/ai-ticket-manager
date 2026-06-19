@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 
 type Ticket = {
   id: string;
@@ -14,9 +15,17 @@ type Ticket = {
 };
 
 export function RequesterTicketsPage() {
+  const location = useLocation();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const successMessage =
+    typeof location.state === "object" &&
+    location.state !== null &&
+    "success" in location.state &&
+    typeof location.state.success === "string"
+      ? location.state.success
+      : "";
 
   const fetchTickets = async () => {
     try {
@@ -55,6 +64,12 @@ export function RequesterTicketsPage() {
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm">
+        {successMessage && (
+          <div className="m-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+            {successMessage}
+          </div>
+        )}
+
         {isLoading && (
           <div className="p-6 text-sm text-slate-500">Loading tickets...</div>
         )}
@@ -62,9 +77,12 @@ export function RequesterTicketsPage() {
         {error && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!isLoading && !error && tickets.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">
-            You have not submitted any tickets yet.
-          </div>
+          <EmptyState
+            title="No tickets yet"
+            message="Create your first support ticket and our team will help you."
+            actionLabel="Create New Ticket"
+            actionTo="/requester/tickets/new"
+          />
         )}
 
         {!isLoading && !error && tickets.length > 0 && (

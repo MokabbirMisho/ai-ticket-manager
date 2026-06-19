@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type RecentTicket = {
@@ -135,7 +136,14 @@ export function DashboardPage() {
 
           <div className="mt-5 divide-y divide-slate-100">
             {data.recentTickets.length === 0 && (
-              <p className="text-sm text-slate-500">No recent tickets.</p>
+              <EmptyState
+                title="No support tickets yet"
+                message="Once requesters submit tickets, they will appear here for your team to review and manage."
+                actionLabel={
+                  user?.role === "ADMIN" ? "View Requester Portal" : undefined
+                }
+                actionTo={user?.role === "ADMIN" ? "/requester/login" : undefined}
+              />
             )}
 
             {data.recentTickets.map((ticket) => (

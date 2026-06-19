@@ -37,6 +37,7 @@ export function TicketDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const fetchTicket = async () => {
     const response = await api.get(`/tickets/${id}`);
@@ -76,6 +77,12 @@ export function TicketDetailPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
+      setError("");
+      setSuccess("");
+
+      const didStatusChange = ticket?.status !== status;
+      const didAssignmentChange =
+        (ticket?.assignedAgentId || "") !== assignedAgentId;
 
       const response = await api.patch(`/tickets/${id}`, {
         status,
@@ -83,6 +90,11 @@ export function TicketDetailPage() {
       });
 
       setTicket(response.data.data.ticket);
+      setSuccess(
+        didAssignmentChange && !didStatusChange
+          ? "Ticket assigned successfully."
+          : "Ticket status updated successfully.",
+      );
     } catch {
       setError("Failed to update ticket");
     } finally {
@@ -151,6 +163,12 @@ export function TicketDetailPage() {
       <Link to="/tickets" className="text-sm font-medium text-slate-600">
         ← Back to tickets
       </Link>
+
+      {success && (
+        <div className="mt-5 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          {success}
+        </div>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="lg:col-span-2">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type Tenant = {
@@ -125,6 +126,15 @@ export function SuperAdminDashboard() {
           </div>
 
           <div className="mt-5 divide-y divide-slate-100">
+            {tenants.length === 0 && (
+              <EmptyState
+                title="No tenants yet"
+                message="Create your first tenant workspace to start onboarding clients."
+                actionLabel="Create Tenant"
+                actionTo="/super/tenants/new"
+              />
+            )}
+
             {tenants.slice(0, 5).map((tenant) => (
               <Link
                 key={tenant.id}

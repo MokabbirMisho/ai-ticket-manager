@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type TicketStatus = "OPEN" | "RESOLVED" | "CLOSED";
@@ -151,11 +152,16 @@ export function TicketsPage() {
         {error && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!isLoading && !error && tickets.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">
-            {isAdmin
-              ? "No tickets found."
-              : "No tickets are assigned to you yet."}
-          </div>
+          <EmptyState
+            title="No support tickets yet"
+            message={
+              isAdmin
+                ? "Once requesters submit tickets, they will appear here for your team to review and manage."
+                : "Assigned support tickets will appear here when an admin routes work to you."
+            }
+            actionLabel={isAdmin ? "View Requester Portal" : undefined}
+            actionTo={isAdmin ? "/requester/login" : undefined}
+          />
         )}
 
         {!isLoading && !error && tickets.length > 0 && (

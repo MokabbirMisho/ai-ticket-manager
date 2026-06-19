@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/axios";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../context/AuthContext";
 
 type UserRole = "ADMIN" | "AGENT";
@@ -177,7 +178,9 @@ export function UsersPage() {
         jobTitle: createForm.jobTitle.trim(),
       });
 
-      setSuccess("Staff account created successfully");
+      setSuccess(
+        "Staff member created successfully. A temporary password has been set.",
+      );
       setCreateForm(emptyStaffForm);
       await fetchUsers(1);
     } catch (error) {
@@ -235,7 +238,7 @@ export function UsersPage() {
         password: editForm.password.trim() || undefined,
       });
 
-      setSuccess("Staff account updated successfully");
+      setSuccess("Staff member updated successfully.");
       closeEditModal();
       await fetchUsers(pagination.page);
     } catch (error) {
@@ -280,7 +283,10 @@ export function UsersPage() {
         </p>
       </div>
 
-      <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+      <section
+        id="create-staff"
+        className="mt-6 rounded-2xl bg-white p-6 shadow-sm"
+      >
         <h2 className="text-lg font-bold text-slate-900">
           Create Staff Account
         </h2>
@@ -362,7 +368,16 @@ export function UsersPage() {
         )}
 
         {!isLoading && users.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">No users found.</div>
+          <EmptyState
+            title="No staff members yet"
+            message="Add agents or admins to help manage tickets for this workspace."
+            actionLabel="Add Staff Member"
+            onAction={() =>
+              document
+                .getElementById("create-staff")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
         )}
 
         {!isLoading && users.length > 0 && (

@@ -82,7 +82,7 @@ export function CreateTenantPage() {
       });
 
       setSuccess(
-        "Tenant and tenant admin created successfully. Share the login email and temporary password securely.",
+        "Tenant workspace created successfully. The tenant admin can now log in with the temporary password.",
       );
       setTimeout(() => {
         navigate(`/super/tenants/${response.data.data.tenant.id}`);

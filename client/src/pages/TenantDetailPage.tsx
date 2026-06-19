@@ -184,7 +184,7 @@ export function TenantDetailPage() {
         paymentProvider,
       });
       await fetchTenant(false);
-      setSuccess("Subscription updated");
+      setSuccess("Subscription updated successfully.");
     } catch {
       setError("Failed to update subscription");
     } finally {

@@ -22,7 +22,12 @@ export function RequesterCreateTicketPage() {
         description,
       });
 
-      navigate("/requester/tickets");
+      navigate("/requester/tickets", {
+        state: {
+          success:
+            "Your ticket has been submitted successfully. Our support team can now review it.",
+        },
+      });
     } catch {
       setError("Failed to create ticket");
     } finally {
