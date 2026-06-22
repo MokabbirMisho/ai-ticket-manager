@@ -24,6 +24,11 @@ enum TicketCategory {
   REFUND_REQUEST
 }
 
+enum TicketMessageSenderType {
+  REQUESTER
+  STAFF
+}
+
 enum Plan {
   FREE
   BASIC
@@ -90,6 +95,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   assignedTickets Ticket[] @relation("AssignedTickets")
+  ticketMessages   TicketMessage[] @relation("StaffTicketMessages")
 
   @@index([tenantId])
 }
@@ -115,6 +121,7 @@ model Requester {
   updatedAt DateTime @updatedAt
 
   tickets Ticket[]
+  ticketMessages TicketMessage[] @relation("RequesterTicketMessages")
 
   @@index([tenantId])
 }
@@ -140,7 +147,32 @@ model Ticket {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  messages TicketMessage[]
+
   @@index([tenantId])
+}
+
+model TicketMessage {
+  id String @id @default(cuid())
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+  senderType TicketMessageSenderType
+
+  senderUserId String?
+  senderUser   User? @relation("StaffTicketMessages", fields: [senderUserId], references: [id])
+
+  senderRequesterId String?
+  senderRequester   Requester? @relation("RequesterTicketMessages", fields: [senderRequesterId], references: [id])
+
+  message String
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([senderUserId])
+  @@index([senderRequesterId])
 }
 
 model KnowledgeArticle {

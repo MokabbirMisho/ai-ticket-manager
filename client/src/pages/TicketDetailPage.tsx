@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 type TicketStatus = "OPEN" | "RESOLVED" | "CLOSED";
 
@@ -26,18 +27,33 @@ type Ticket = {
   assignedAgent: User | null;
 };
 
+type TicketMessage = {
+  id: string;
+  ticketId: string;
+  senderType: "REQUESTER" | "STAFF";
+  senderDisplayName: string;
+  senderEmail: string | null;
+  message: string;
+  createdAt: string;
+};
+
 export function TicketDetailPage() {
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [agents, setAgents] = useState<User[]>([]);
   const [status, setStatus] = useState<TicketStatus>("OPEN");
   const [assignedAgentId, setAssignedAgentId] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingReply, setIsSendingReply] = useState(false);
   const [aiLoading, setAiLoading] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const isAdmin = user?.role === "ADMIN";
 
   const fetchTicket = async () => {
     const response = await api.get(`/tickets/${id}`);
@@ -57,12 +73,21 @@ export function TicketDetailPage() {
     setAgents(activeAgents);
   };
 
+  const fetchMessages = async () => {
+    const response = await api.get(`/tickets/${id}/messages`);
+    setMessages(response.data.data.messages);
+  };
+
   const loadData = async () => {
     try {
       setIsLoading(true);
       setError("");
 
-      await Promise.all([fetchTicket(), fetchAgents()]);
+      if (isAdmin) {
+        await Promise.all([fetchTicket(), fetchAgents(), fetchMessages()]);
+      } else {
+        await Promise.all([fetchTicket(), fetchMessages()]);
+      }
     } catch {
       setError("Failed to load ticket details");
     } finally {
@@ -72,7 +97,7 @@ export function TicketDetailPage() {
 
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [id, isAdmin]);
 
   const handleSave = async () => {
     try {
@@ -84,10 +109,17 @@ export function TicketDetailPage() {
       const didAssignmentChange =
         (ticket?.assignedAgentId || "") !== assignedAgentId;
 
-      const response = await api.patch(`/tickets/${id}`, {
-        status,
-        assignedAgentId: assignedAgentId || null,
-      });
+      const response = await api.patch(
+        `/tickets/${id}`,
+        isAdmin
+          ? {
+              status,
+              assignedAgentId: assignedAgentId || null,
+            }
+          : {
+              status,
+            },
+      );
 
       setTicket(response.data.data.ticket);
       setSuccess(
@@ -99,6 +131,38 @@ export function TicketDetailPage() {
       setError("Failed to update ticket");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!replyMessage.trim()) {
+      setError("Reply message is required");
+      return;
+    }
+
+    try {
+      setIsSendingReply(true);
+      setError("");
+      setSuccess("");
+
+      const response = await api.post(`/tickets/${id}/messages`, {
+        message: replyMessage,
+      });
+
+      setMessages((current) => [...current, response.data.data.message]);
+      setReplyMessage("");
+      setSuccess("Reply sent successfully.");
+    } catch {
+      setError("Failed to send reply");
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
+
+  const useAiReplyAsDraft = () => {
+    if (ticket?.aiReply) {
+      setReplyMessage(ticket.aiReply);
+      setSuccess("AI reply copied to draft.");
     }
   };
 
@@ -255,6 +319,55 @@ export function TicketDetailPage() {
               {ticket.aiReply || "AI suggested reply will appear here later."}
             </p>
           </div>
+
+          <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Conversation
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Messages between your team and the requester.
+                </p>
+              </div>
+
+              {ticket.aiReply && (
+                <button
+                  type="button"
+                  onClick={useAiReplyAsDraft}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Use AI reply as draft
+                </button>
+              )}
+            </div>
+
+            <MessageList messages={messages} />
+
+            <div className="mt-5">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Reply
+              </label>
+              <textarea
+                value={replyMessage}
+                onChange={(event) => setReplyMessage(event.target.value)}
+                rows={5}
+                maxLength={5000}
+                placeholder="Write a reply to the requester..."
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+              />
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSendReply}
+                  disabled={isSendingReply}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  {isSendingReply ? "Sending..." : "Send Reply"}
+                </button>
+              </div>
+            </div>
+          </section>
         </section>
 
         <aside className="space-y-6">
@@ -279,23 +392,25 @@ export function TicketDetailPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Assign Agent
-                </label>
-                <select
-                  value={assignedAgentId}
-                  onChange={(event) => setAssignedAgentId(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-                >
-                  <option value="">Unassigned</option>
-                  {agents.map((agent) => (
-                    <option key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {isAdmin && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Assign Agent
+                  </label>
+                  <select
+                    value={assignedAgentId}
+                    onChange={(event) => setAssignedAgentId(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+                  >
+                    <option value="">Unassigned</option>
+                    {agents.map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 onClick={handleSave}
@@ -347,6 +462,44 @@ export function TicketDetailPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function MessageList({ messages }: { messages: TicketMessage[] }) {
+  if (messages.length === 0) {
+    return (
+      <div className="mt-5 rounded-xl bg-slate-50 px-4 py-5 text-sm text-slate-500">
+        No replies yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 space-y-3">
+      {messages.map((message) => (
+        <article
+          key={message.id}
+          className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="font-medium text-slate-900">
+                {message.senderDisplayName}
+              </span>
+              <span className="ml-2 rounded-full bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                {message.senderType === "STAFF" ? "Staff" : "Requester"}
+              </span>
+            </div>
+            <time className="text-xs text-slate-500">
+              {new Date(message.createdAt).toLocaleString()}
+            </time>
+          </div>
+          <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">
+            {message.message}
+          </p>
+        </article>
+      ))}
     </div>
   );
 }

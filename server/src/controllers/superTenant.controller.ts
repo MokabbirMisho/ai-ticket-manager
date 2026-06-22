@@ -8,6 +8,8 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { sendEmail } from "../services/email.service.js";
+import { buildTenantAdminWelcomeEmail } from "../services/emailTemplates.service.js";
 
 const isPlan = (value: unknown): value is Plan => {
   return typeof value === "string" && Object.values(Plan).includes(value as Plan);
@@ -338,14 +340,27 @@ export const createTenant = async (req: Request, res: Response) => {
       };
     });
 
+    const welcomeEmail = await sendEmail({
+      to: admin.email,
+      ...buildTenantAdminWelcomeEmail({
+        tenantName: tenant.name,
+        adminEmail: admin.email,
+        temporaryPassword: temporaryPassword.trim(),
+      }),
+    });
+    const emailWarning = !welcomeEmail.success;
+
     return res.status(201).json({
       status: "success",
-      message: "Tenant created successfully",
+      message: emailWarning
+        ? "Tenant created successfully, but the welcome email could not be sent."
+        : "Tenant created successfully",
       data: {
         tenant,
         admin: {
           email: admin.email,
         },
+        welcomeEmailSent: welcomeEmail.success,
       },
     });
   } catch (error) {

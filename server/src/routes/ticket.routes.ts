@@ -5,6 +5,10 @@ import {
   listTickets,
   updateTicket,
 } from "../controllers/ticket.controller.js";
+import {
+  createStaffTicketMessage,
+  listStaffTicketMessages,
+} from "../controllers/ticketMessage.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   requireActiveTenant,
@@ -19,6 +23,8 @@ router.use(requireActiveTenant);
 
 router.get("/", listTickets);
 router.post("/", createTicket);
+router.get("/:id/messages", listStaffTicketMessages);
+router.post("/:id/messages", createStaffTicketMessage);
 router.get("/:id", getTicket);
 router.patch("/:id", updateTicket);
 

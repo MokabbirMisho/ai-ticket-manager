@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
 import { TicketCategory, TicketStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { sendEmail } from "../services/email.service.js";
+import {
+  buildAgentTicketAssignedEmail,
+  buildRequesterTicketStatusUpdatedEmail,
+} from "../services/emailTemplates.service.js";
 
 const withRequesterCompatibility = <T extends { requester?: unknown }>(
   ticket: T,
@@ -8,6 +13,20 @@ const withRequesterCompatibility = <T extends { requester?: unknown }>(
   ...ticket,
   student: ticket.requester,
 });
+
+const getTicketPriority = (ticket: unknown) => {
+  if (
+    typeof ticket === "object" &&
+    ticket !== null &&
+    "priority" in ticket &&
+    typeof ticket.priority === "string" &&
+    ticket.priority.trim()
+  ) {
+    return ticket.priority.trim();
+  }
+
+  return "Not specified";
+};
 
 export const createTicket = async (req: Request, res: Response) => {
   try {
@@ -236,6 +255,10 @@ export const updateTicket = async (req: Request, res: Response) => {
     }
 
     const { status, category, assignedAgentId, aiSummary, aiReply } = req.body;
+    const hasAssignedAgentField = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "assignedAgentId",
+    );
 
     const ticketWhere: Prisma.TicketWhereInput = {
       id: ticketId,
@@ -267,7 +290,11 @@ export const updateTicket = async (req: Request, res: Response) => {
       });
     }
 
-    if (currentRole === "AGENT" && assignedAgentId) {
+    if (
+      currentRole === "AGENT" &&
+      hasAssignedAgentField &&
+      assignedAgentId !== existingTicket.assignedAgentId
+    ) {
       return res.status(403).json({
         status: "fail",
         message: "Agents cannot assign tickets",
@@ -297,7 +324,8 @@ export const updateTicket = async (req: Request, res: Response) => {
       data: {
         status,
         category,
-        assignedAgentId,
+        assignedAgentId:
+          currentRole === "AGENT" ? existingTicket.assignedAgentId : assignedAgentId,
         aiSummary,
         aiReply,
       },
@@ -320,10 +348,53 @@ export const updateTicket = async (req: Request, res: Response) => {
       },
     });
 
+    const notificationEmailResults: boolean[] = [];
+    const assignedAgentChanged =
+      Boolean(assignedAgentId) &&
+      assignedAgentId !== existingTicket.assignedAgentId;
+    const statusChanged =
+      typeof status === "string" && status !== existingTicket.status;
+
+    if (assignedAgentChanged && ticket.assignedAgent) {
+      const assignedEmail = await sendEmail({
+        to: ticket.assignedAgent.email,
+        ...buildAgentTicketAssignedEmail({
+          ticketSubject: ticket.subject,
+          requesterName: ticket.requester?.name || "Not available",
+          requesterEmail: ticket.requester?.email || "Not available",
+          ticketPriority: getTicketPriority(ticket),
+        }),
+      });
+
+      notificationEmailResults.push(assignedEmail.success);
+    }
+
+    if (statusChanged && ticket.requester) {
+      const statusEmail = await sendEmail({
+        to: ticket.requester.email,
+        ...buildRequesterTicketStatusUpdatedEmail({
+          ticketSubject: ticket.subject,
+          oldStatus: existingTicket.status,
+          newStatus: ticket.status,
+        }),
+      });
+
+      notificationEmailResults.push(statusEmail.success);
+    }
+
+    const notificationEmailsSent =
+      notificationEmailResults.length === 0 ||
+      notificationEmailResults.every(Boolean);
+
     return res.status(200).json({
       status: "success",
-      message: "Ticket updated successfully",
-      data: { ticket: withRequesterCompatibility(ticket) },
+      message: notificationEmailsSent
+        ? "Ticket updated successfully"
+        : "Ticket updated successfully, but one or more notification emails could not be sent.",
+      data: {
+        ticket: withRequesterCompatibility(ticket),
+        notificationEmailsSent,
+      },
     });
   } catch (error) {
     console.error("Update ticket error:", error);

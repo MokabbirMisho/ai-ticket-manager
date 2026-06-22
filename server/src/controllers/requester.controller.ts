@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import type { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
+import { sendEmail } from "../services/email.service.js";
+import { buildRequesterWelcomeEmail } from "../services/emailTemplates.service.js";
 
 const requesterSelect = {
   id: true,
@@ -105,10 +107,26 @@ export const createRequester = async (req: Request, res: Response) => {
       select: requesterSelect,
     });
 
+    const welcomeEmail = await sendEmail({
+      to: requester.email,
+      ...buildRequesterWelcomeEmail({
+        requesterName: requester.name,
+        requesterEmail: requester.email,
+        temporaryPassword: normalizedPassword,
+      }),
+    });
+    const emailWarning = !welcomeEmail.success;
+
     return res.status(201).json({
       status: "success",
-      message: "Requester created successfully",
-      data: { requester, student: requester },
+      message: emailWarning
+        ? "Requester created successfully, but the welcome email could not be sent."
+        : "Requester created successfully",
+      data: {
+        requester,
+        student: requester,
+        welcomeEmailSent: welcomeEmail.success,
+      },
     });
   } catch (error) {
     console.error("Create requester error:", error);

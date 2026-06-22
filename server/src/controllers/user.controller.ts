@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { sendEmail } from "../services/email.service.js";
+import { buildStaffWelcomeEmail } from "../services/emailTemplates.service.js";
 
 type StaffRole = "ADMIN" | "AGENT";
 
@@ -94,10 +96,26 @@ export const createAgent = async (req: Request, res: Response) => {
       select: userSelect,
     });
 
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+    const welcomeEmail = await sendEmail({
+      to: agent.email,
+      ...buildStaffWelcomeEmail({
+        workspaceName: tenant?.name || "your workspace",
+        staffEmail: agent.email,
+        temporaryPassword: normalizedPassword,
+      }),
+    });
+    const emailWarning = !welcomeEmail.success;
+
     return res.status(201).json({
       status: "success",
-      message: "Agent created successfully",
-      data: { user: agent },
+      message: emailWarning
+        ? "Agent created successfully, but the welcome email could not be sent."
+        : "Agent created successfully",
+      data: { user: agent, welcomeEmailSent: welcomeEmail.success },
     });
   } catch (error) {
     console.error("Create agent error:", error);
