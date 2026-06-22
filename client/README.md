@@ -2,6 +2,28 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Playwright E2E Safety
+
+Safe read-only tests can be run normally. Data-write tests are skipped unless explicitly enabled:
+
+```bash
+E2E_ALLOW_DATA_WRITES=false npm run test:e2e
+```
+
+Tests that create, update, or delete data are skipped by default with:
+
+```text
+Skipping data-write E2E test because E2E_ALLOW_DATA_WRITES is not true or target URL is live.
+```
+
+Only run data-write E2E tests against a local or disposable test database:
+
+```bash
+E2E_ALLOW_DATA_WRITES=true PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run test:e2e
+```
+
+Never enable `E2E_ALLOW_DATA_WRITES=true` against production, Vercel, Render, or demo URLs.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

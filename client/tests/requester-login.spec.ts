@@ -1,4 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { skipDataWriteTestsUnlessAllowed } from "./e2eGuards";
+
+skipDataWriteTestsUnlessAllowed();
 
 test("requester can login successfully", async ({ page }) => {
   const email = `requester-${Date.now()}@example.com`;

@@ -1,4 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { skipDataWriteTestsUnlessAllowed } from "./e2eGuards";
+
+skipDataWriteTestsUnlessAllowed();
 
 test("requester can create a ticket", async ({ page }) => {
   const uniqueSubject = `Playwright Test Ticket ${Date.now()}`;
