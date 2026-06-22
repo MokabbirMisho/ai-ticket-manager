@@ -12,6 +12,10 @@ export const passwordResetGenericMessage =
   "If an account exists for this email, a password reset link has been sent.";
 
 const getClientUrl = () => {
+  if (process.env.NODE_ENV === "production" && !process.env.CLIENT_URL) {
+    throw new Error("CLIENT_URL is required in production");
+  }
+
   return (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
 };
 

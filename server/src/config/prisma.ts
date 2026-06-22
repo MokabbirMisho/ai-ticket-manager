@@ -11,8 +11,6 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is missing from .env");
 }
 
-console.log("Prisma database connection configured");
-
 const pool = new Pool({
   connectionString: databaseUrl,
 });

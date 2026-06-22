@@ -18,12 +18,22 @@ import superUserRoutes from "./routes/superUser.routes.js";
 import tenantProfileRoutes from "./routes/tenantProfile.routes.js";
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+if (isProduction && !process.env.CLIENT_URL) {
+  throw new Error("CLIENT_URL is required in production");
+}
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: clientUrl,
     credentials: true,
   }),
 );
