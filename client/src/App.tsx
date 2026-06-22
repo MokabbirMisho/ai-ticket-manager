@@ -4,6 +4,10 @@ import { RequesterLayout } from "./layouts/RequesterLayout";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyProfilePage } from "./pages/CompanyProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
+import {
+  ForgotPasswordPage,
+  RequesterForgotPasswordPage,
+} from "./pages/ForgotPasswordPage";
 import { CreateTenantPage } from "./pages/CreateTenantPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -16,6 +20,10 @@ import { RequesterAccountPage } from "./pages/RequesterAccountPage";
 import { RequesterDashboardPage } from "./pages/RequesterDashboardPage";
 import { RequesterLoginPage } from "./pages/RequesterLoginPage";
 import { RequesterRegisterPage } from "./pages/RequesterRegisterPage";
+import {
+  RequesterResetPasswordPage,
+  ResetPasswordPage,
+} from "./pages/ResetPasswordPage";
 import { RequestersPage } from "./pages/RequestersPage";
 import { RequesterTicketDetailPage } from "./pages/RequesterTicketDetailPage";
 import { RequesterTicketsPage } from "./pages/RequesterTicketsPage";
@@ -36,6 +44,8 @@ function App() {
       {/* Staff Login */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Super Admin Login */}
       <Route path="/super/login" element={<SuperLoginPage />} />
@@ -43,6 +53,14 @@ function App() {
       {/* Requester Login */}
       <Route path="/requester/login" element={<RequesterLoginPage />} />
       <Route path="/requester/register" element={<RequesterRegisterPage />} />
+      <Route
+        path="/requester/forgot-password"
+        element={<RequesterForgotPasswordPage />}
+      />
+      <Route
+        path="/requester/reset-password"
+        element={<RequesterResetPasswordPage />}
+      />
       <Route
         path="/student/login"
         element={<Navigate to="/requester/login" replace />}

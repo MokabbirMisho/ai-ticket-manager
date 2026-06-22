@@ -96,6 +96,7 @@ model User {
 
   assignedTickets Ticket[] @relation("AssignedTickets")
   ticketMessages   TicketMessage[] @relation("StaffTicketMessages")
+  passwordResetTokens PasswordResetToken[]
 
   @@index([tenantId])
 }
@@ -122,6 +123,7 @@ model Requester {
 
   tickets Ticket[]
   ticketMessages TicketMessage[] @relation("RequesterTicketMessages")
+  passwordResetTokens PasswordResetToken[]
 
   @@index([tenantId])
 }
@@ -189,6 +191,27 @@ model KnowledgeArticle {
   updatedAt DateTime @updatedAt
 
   @@index([tenantId])
+}
+
+model PasswordResetToken {
+  id String @id @default(cuid())
+
+  tokenHash String
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id])
+
+  requesterId String?
+  requester   Requester? @relation(fields: [requesterId], references: [id])
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@index([requesterId])
+  @@index([expiresAt])
 }
 
 model UserSession {

@@ -167,9 +167,17 @@ export function RequesterLoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <Link
+                  to="/requester/forgot-password"
+                  className="text-xs font-semibold text-slate-700 hover:text-slate-950 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 data-testid="password-input"
                 type="password"

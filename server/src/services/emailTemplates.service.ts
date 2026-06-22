@@ -352,3 +352,29 @@ export const buildRequesterReplyToStaffEmail = ({
     ]),
   };
 };
+
+export const buildPasswordResetEmail = ({
+  resetUrl,
+  expiresInMinutes,
+}: {
+  resetUrl: string;
+  expiresInMinutes: number;
+}) => {
+  const text = [
+    "We received a request to reset your AI Ticket Manager password.",
+    `Use this secure link to set a new password: ${resetUrl}`,
+    `This link expires in ${expiresInMinutes} minutes and can only be used once.`,
+    "If you did not request a password reset, you can ignore this email.",
+  ].join("\n\n");
+
+  return {
+    subject: "Reset your AI Ticket Manager password",
+    text,
+    html: buildParagraphs([
+      "We received a request to reset your AI Ticket Manager password.",
+      `Use this secure link to set a new password: ${resetUrl}`,
+      `This link expires in ${expiresInMinutes} minutes and can only be used once.`,
+      "If you did not request a password reset, you can ignore this email.",
+    ]),
+  };
+};

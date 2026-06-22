@@ -2,6 +2,12 @@ import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
 import { getOrCreateDefaultTenant } from "../middleware/tenant.middleware.js";
+import {
+  passwordResetGenericMessage,
+  requestRequesterPasswordReset,
+  resetRequesterPassword,
+  validateResetPasswordInput,
+} from "../services/passwordReset.service.js";
 
 export const registerRequester = async (req: Request, res: Response) => {
   try {
@@ -190,6 +196,75 @@ export const getRequesterMe = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: "error",
       message: "Something went wrong",
+    });
+  }
+};
+
+export const forgotRequesterPassword = async (req: Request, res: Response) => {
+  try {
+    await requestRequesterPasswordReset(req.body.email);
+
+    return res.status(200).json({
+      status: "success",
+      message: passwordResetGenericMessage,
+    });
+  } catch (error) {
+    console.error(
+      "Requester forgot password error:",
+      error instanceof Error ? error.message : error,
+    );
+
+    return res.status(200).json({
+      status: "success",
+      message: passwordResetGenericMessage,
+    });
+  }
+};
+
+export const resetRequesterPasswordController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+    const validationError = validateResetPasswordInput({
+      token,
+      newPassword,
+      confirmPassword,
+    });
+
+    if (validationError) {
+      return res.status(400).json({
+        status: "fail",
+        message: validationError,
+      });
+    }
+
+    const didReset = await resetRequesterPassword({
+      token,
+      newPassword,
+    });
+
+    if (!didReset) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Password reset link is invalid, expired, or already used",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password has been reset successfully",
+    });
+  } catch (error) {
+    console.error(
+      "Requester reset password error:",
+      error instanceof Error ? error.message : error,
+    );
+
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to reset password",
     });
   }
 };
