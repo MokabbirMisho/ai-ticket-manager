@@ -15,6 +15,16 @@ const buildParagraphs = (lines: string[]) => {
   return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 };
 
+const buildReplyPreview = (message: string) => {
+  const normalized = message.trim().replace(/\s+/g, " ");
+
+  if (normalized.length <= 250) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 247)}...`;
+};
+
 export const buildTenantAdminWelcomeEmail = ({
   tenantName,
   adminEmail,
@@ -263,6 +273,82 @@ export const buildRequesterTicketStatusUpdatedEmail = ({
       `Ticket subject: ${ticketSubject}`,
       statusLine,
       `Requester portal: ${ticketsUrl}`,
+    ]),
+  };
+};
+
+export const buildStaffReplyToRequesterEmail = ({
+  requesterName,
+  ticketId,
+  ticketSubject,
+  replySenderName,
+  replyMessage,
+}: {
+  requesterName: string;
+  ticketId: string;
+  ticketSubject: string;
+  replySenderName: string;
+  replyMessage: string;
+}) => {
+  const ticketUrl = `${getClientUrl()}/requester/tickets/${ticketId}`;
+  const replyPreview = buildReplyPreview(replyMessage);
+  const text = [
+    `Hello ${requesterName},`,
+    "There is a new reply on your support ticket.",
+    `Ticket subject: ${ticketSubject}`,
+    `Reply from: ${replySenderName}`,
+    `Reply preview: ${replyPreview}`,
+    `View ticket: ${ticketUrl}`,
+  ].join("\n\n");
+
+  return {
+    subject: "New reply on your support ticket",
+    text,
+    html: buildParagraphs([
+      `Hello ${requesterName},`,
+      "There is a new reply on your support ticket.",
+      `Ticket subject: ${ticketSubject}`,
+      `Reply from: ${replySenderName}`,
+      `Reply preview: ${replyPreview}`,
+      `View ticket: ${ticketUrl}`,
+    ]),
+  };
+};
+
+export const buildRequesterReplyToStaffEmail = ({
+  requesterName,
+  requesterEmail,
+  ticketId,
+  ticketSubject,
+  replyMessage,
+}: {
+  requesterName: string;
+  requesterEmail: string;
+  ticketId: string;
+  ticketSubject: string;
+  replyMessage: string;
+}) => {
+  const ticketUrl = `${getClientUrl()}/tickets/${ticketId}`;
+  const replyPreview = buildReplyPreview(replyMessage);
+  const text = [
+    "A requester replied to a support ticket.",
+    `Requester: ${requesterName}`,
+    `Requester email: ${requesterEmail}`,
+    `Ticket subject: ${ticketSubject}`,
+    `Reply preview: ${replyPreview}`,
+    `View ticket: ${ticketUrl}`,
+  ].join("\n\n");
+
+  return {
+    subject: "Requester replied to a support ticket",
+    text,
+    html: buildParagraphs([
+      "A requester replied to a support ticket.",
+      `Requester: ${requesterName}`,
+      `Requester email: ${requesterEmail}`,
+      `Ticket subject: ${ticketSubject}`,
+      `Reply preview: ${replyPreview}`,
+      `View ticket: ${ticketUrl}`,
     ]),
   };
 };

@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
 import type { Prisma, Ticket } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
+import { sendEmail } from "../services/email.service.js";
+import {
+  buildRequesterReplyToStaffEmail,
+  buildStaffReplyToRequesterEmail,
+} from "../services/emailTemplates.service.js";
 
 const maxMessageLength = 5000;
 
@@ -176,6 +181,129 @@ const getMessagesForTicket = async (ticket: Ticket) => {
   return messages.map(formatMessage);
 };
 
+const notifyRequesterAboutStaffReply = async ({
+  ticketId,
+  replyMessage,
+  replySenderName,
+}: {
+  ticketId: string;
+  replyMessage: string;
+  replySenderName: string;
+}) => {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    select: {
+      id: true,
+      subject: true,
+      requester: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!ticket?.requester?.email) {
+    return false;
+  }
+
+  const result = await sendEmail({
+    to: ticket.requester.email,
+    ...buildStaffReplyToRequesterEmail({
+      requesterName: ticket.requester.name,
+      ticketId: ticket.id,
+      ticketSubject: ticket.subject,
+      replySenderName,
+      replyMessage,
+    }),
+  });
+
+  return result.success;
+};
+
+const notifyStaffAboutRequesterReply = async ({
+  ticketId,
+  replyMessage,
+}: {
+  ticketId: string;
+  replyMessage: string;
+}) => {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    select: {
+      id: true,
+      subject: true,
+      tenantId: true,
+      assignedAgentId: true,
+      assignedAgent: {
+        select: {
+          email: true,
+          tenantId: true,
+          isActive: true,
+        },
+      },
+      requester: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!ticket?.requester?.email) {
+    return false;
+  }
+
+  const email = buildRequesterReplyToStaffEmail({
+    requesterName: ticket.requester.name,
+    requesterEmail: ticket.requester.email,
+    ticketId: ticket.id,
+    ticketSubject: ticket.subject,
+    replyMessage,
+  });
+
+  if (
+    ticket.assignedAgent?.email &&
+    ticket.assignedAgent.isActive &&
+    ticket.assignedAgent.tenantId === ticket.tenantId
+  ) {
+    const result = await sendEmail({
+      to: ticket.assignedAgent.email,
+      ...email,
+    });
+
+    return result.success;
+  }
+
+  const tenantAdmins = await prisma.user.findMany({
+    where: {
+      tenantId: ticket.tenantId,
+      role: "ADMIN",
+      isActive: true,
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  if (tenantAdmins.length === 0) {
+    return false;
+  }
+
+  const results = await Promise.all(
+    tenantAdmins.map((admin) =>
+      sendEmail({
+        to: admin.email,
+        ...email,
+      }),
+    ),
+  );
+
+  return results.every((result) => result.success);
+};
+
 export const listStaffTicketMessages = async (req: Request, res: Response) => {
   try {
     const ticketId = req.params.id;
@@ -261,10 +389,18 @@ export const createStaffTicketMessage = async (req: Request, res: Response) => {
       include: messageInclude,
     });
 
+    const notificationEmailSent = await notifyRequesterAboutStaffReply({
+      ticketId: access.ticket.id,
+      replyMessage: validation.message,
+      replySenderName: message.senderUser?.name || "Staff",
+    });
+
     return res.status(201).json({
       status: "success",
-      message: "Reply sent successfully.",
-      data: { message: formatMessage(message) },
+      message: notificationEmailSent
+        ? "Reply sent successfully."
+        : "Reply sent successfully, but the notification email could not be sent.",
+      data: { message: formatMessage(message), notificationEmailSent },
     });
   } catch (error) {
     console.error("Create staff ticket message error:", error);
@@ -367,10 +503,17 @@ export const createRequesterTicketMessage = async (
       include: messageInclude,
     });
 
+    const notificationEmailSent = await notifyStaffAboutRequesterReply({
+      ticketId: access.ticket.id,
+      replyMessage: validation.message,
+    });
+
     return res.status(201).json({
       status: "success",
-      message: "Your reply has been sent successfully.",
-      data: { message: formatMessage(message) },
+      message: notificationEmailSent
+        ? "Your reply has been sent successfully."
+        : "Your reply has been sent successfully, but the notification email could not be sent.",
+      data: { message: formatMessage(message), notificationEmailSent },
     });
   } catch (error) {
     console.error("Create requester ticket message error:", error);
