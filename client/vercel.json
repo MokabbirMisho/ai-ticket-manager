@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://ai-ticket-manager-aix2.onrender.com/api/:path*"
+    }
+  ]
+}
