@@ -101,6 +101,8 @@ export function DashboardPage() {
         <WorkspaceSetupCard onboarding={data.onboarding} />
       )}
 
+      {user?.role === "AGENT" && <AgentGettingStartedCard />}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">
@@ -176,6 +178,90 @@ export function DashboardPage() {
   );
 }
 
+function AgentGettingStartedCard() {
+  const items = [
+    {
+      title: "Check your assigned tickets",
+      helperText: "Start from your tickets queue to see what needs attention.",
+      ctaLabel: "View Tickets",
+    },
+    {
+      title: "Open a ticket and review requester details",
+      helperText:
+        "Read the full issue, category, status, and requester context before acting.",
+      ctaLabel: "Review Tickets",
+    },
+    {
+      title: "Generate an AI summary before replying",
+      helperText:
+        "Use the summary to quickly understand longer support requests.",
+      ctaLabel: "Use AI Tools",
+    },
+    {
+      title: "Use AI suggested reply as a draft, then edit it if needed",
+      helperText:
+        "Treat generated replies as starting points and adjust the wording.",
+      ctaLabel: "Draft Reply",
+    },
+    {
+      title: "Update the ticket status after handling the issue",
+      helperText: "Keep the team aligned by marking tickets resolved or closed.",
+      ctaLabel: "Update Status",
+    },
+  ];
+
+  return (
+    <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">
+            Agent Getting Started
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Follow these steps to manage support tickets efficiently.
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 lg:max-w-sm">
+          AI suggestions are drafts. Always review before sending or using them.
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-5">
+        {items.map((item, index) => (
+          <div
+            key={item.title}
+            className="flex h-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-500">
+                {index + 1}
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  {item.title}
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {item.helperText}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-4">
+              <Link
+                to="/tickets"
+                className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                {item.ctaLabel}
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function WorkspaceSetupCard({
   onboarding,
 }: {
@@ -188,9 +274,9 @@ function WorkspaceSetupCard({
       helperText:
         "Add workspace contact details so support communication is ready.",
       completed: onboarding.completeCompanyProfile,
-      ctaLabel: "Coming soon",
-      href: "",
-      disabled: true,
+      ctaLabel: "Complete Profile",
+      href: "/settings/company",
+      disabled: false,
     },
     {
       key: "hasFirstAgent",

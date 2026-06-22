@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
 import { RequesterLayout } from "./layouts/RequesterLayout";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
+import { CompanyProfilePage } from "./pages/CompanyProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CreateTenantPage } from "./pages/CreateTenantPage";
 import { LandingPage } from "./pages/LandingPage";
@@ -113,6 +114,11 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/settings/company" element={<CompanyProfilePage />} />
+        <Route
+          path="/tenant/settings"
+          element={<Navigate to="/settings/company" replace />}
+        />
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/users" element={<UsersPage />} />

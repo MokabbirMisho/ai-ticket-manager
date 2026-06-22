@@ -18,6 +18,7 @@ export function AppLayout() {
           { label: "Users", path: "/users" },
           { label: "Requesters", path: "/requesters" },
           { label: "Knowledge Base", path: "/knowledge" },
+          { label: "Company Profile", path: "/settings/company" },
         ]
       : [
           { label: "Dashboard", path: "/dashboard" },

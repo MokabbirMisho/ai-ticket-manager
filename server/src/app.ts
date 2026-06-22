@@ -15,6 +15,7 @@ import requesterRoutes from "./routes/requester.routes.js";
 import knowledgeRoutes from "./routes/knowledge.routes.js";
 import superTenantRoutes from "./routes/superTenant.routes.js";
 import superUserRoutes from "./routes/superUser.routes.js";
+import tenantProfileRoutes from "./routes/tenantProfile.routes.js";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/api/student/tickets", requesterTicketRoutes);
 app.use("/api/students", requesterRoutes);
 
 app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/tenant", tenantProfileRoutes);
 app.use("/api/super/tenants", superTenantRoutes);
 app.use("/api/super/users", superUserRoutes);
 

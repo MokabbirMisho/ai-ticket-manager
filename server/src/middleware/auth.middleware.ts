@@ -37,6 +37,28 @@ export const requireAdmin = (
   next();
 };
 
+export const requireTenantAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.session.userId) {
+    return res.status(401).json({
+      status: "fail",
+      message: "Authentication required",
+    });
+  }
+
+  if (req.session.role !== "ADMIN") {
+    return res.status(403).json({
+      status: "fail",
+      message: "Tenant admin access required",
+    });
+  }
+
+  next();
+};
+
 export const requireSuperAdmin = (
   req: Request,
   res: Response,
